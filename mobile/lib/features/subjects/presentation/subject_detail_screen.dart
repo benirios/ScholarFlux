@@ -3,10 +3,10 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme/colors.dart';
 import '../../../core/theme/typography.dart';
 
-class ItemDetailScreen extends StatelessWidget {
-  final String itemId;
+class SubjectDetailScreen extends StatelessWidget {
+  final String subjectId;
 
-  const ItemDetailScreen({super.key, required this.itemId});
+  const SubjectDetailScreen({super.key, required this.subjectId});
 
   @override
   Widget build(BuildContext context) {
@@ -16,20 +16,15 @@ class ItemDetailScreen extends StatelessWidget {
           icon: const Icon(Icons.arrow_back_ios_rounded, size: 20),
           onPressed: () => context.pop(),
         ),
-        title: Text('Item Detail', style: AppTypography.cardTitle),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.edit_rounded, size: 20),
-            onPressed: () {},
-          ),
-        ],
+        title: Text('Subject', style: AppTypography.cardTitle),
       ),
       body: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Item header
+            const SizedBox(height: 8),
+            // Subject header card
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(16),
@@ -43,8 +38,9 @@ class ItemDetailScreen extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('Item $itemId', style: AppTypography.cardTitle),
-                      Text('Nota-0', style: AppTypography.badge),
+                      Text('Subject $subjectId',
+                          style: AppTypography.cardTitle),
+                      Text('Média-0', style: AppTypography.badge),
                     ],
                   ),
                   const SizedBox(height: 8),
@@ -55,35 +51,31 @@ class ItemDetailScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 24),
-            Text('Details', style: AppTypography.sectionTitle),
+            // Items section
+            Text('Items', style: AppTypography.sectionTitle),
             const SizedBox(height: 12),
-            _DetailRow(label: 'Type', value: '—'),
-            _DetailRow(label: 'Due date', value: '—'),
-            _DetailRow(label: 'Priority', value: '—'),
-            _DetailRow(label: 'Status', value: 'Pending'),
+            Expanded(
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.assignment_outlined,
+                        size: 48, color: AppColors.textTertiary),
+                    const SizedBox(height: 12),
+                    Text('No items yet', style: AppTypography.cardSubtitle),
+                  ],
+                ),
+              ),
+            ),
           ],
         ),
       ),
-    );
-  }
-}
-
-class _DetailRow extends StatelessWidget {
-  final String label;
-  final String value;
-
-  const _DetailRow({required this.label, required this.value});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label, style: AppTypography.cardSubtitle),
-          Text(value, style: AppTypography.body),
-        ],
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => context.goNamed(
+          'new-item',
+          pathParameters: {'subjectId': subjectId},
+        ),
+        child: const Icon(Icons.add_rounded),
       ),
     );
   }

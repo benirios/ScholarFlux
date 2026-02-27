@@ -7,7 +7,9 @@ void main() {
     await tester.pumpWidget(
       const ProviderScope(child: ScholarFluxApp()),
     );
-    // Dashboard is the initial route
-    expect(find.text('Dashboard — TODO'), findsOneWidget);
+    // Dashboard is the initial route — verify the bottom nav is present
+    expect(find.text('Dashboard'), findsOneWidget);
+    expect(find.text('Subjects'), findsOneWidget);
+    expect(find.text('Calendar'), findsOneWidget);
   });
 }

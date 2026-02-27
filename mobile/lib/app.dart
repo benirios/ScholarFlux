@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'core/routing/app_router.dart';
+import 'core/theme/app_theme.dart';
 
 class ScholarFluxApp extends StatelessWidget {
   const ScholarFluxApp({super.key});
@@ -9,7 +10,7 @@ class ScholarFluxApp extends StatelessWidget {
     return MaterialApp.router(
       title: 'ScholarFlux',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData.dark(useMaterial3: true),
+      theme: AppTheme.dark,
       routerConfig: goRouter,
     );
   }
