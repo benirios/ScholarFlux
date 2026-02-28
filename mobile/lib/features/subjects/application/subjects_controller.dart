@@ -24,12 +24,16 @@ class SubjectsNotifier extends AsyncNotifier<List<Subject>> {
   Future<void> addSubject({
     required String name,
     String? room,
+    List<SubjectDomain> domains = const [],
+    double maxGrade = 20,
   }) async {
     final now = DateTime.now();
     final subject = Subject(
       id: _generateId(),
       name: name,
       room: room,
+      domains: domains,
+      maxGrade: maxGrade,
       createdAt: now,
       updatedAt: now,
     );

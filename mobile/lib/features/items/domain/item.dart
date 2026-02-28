@@ -13,6 +13,8 @@ class Item {
   final ItemStatus status;
   final String? origin;
   final double? weight; // percentage weight for tests
+  final double? grade; // grade received
+  final String? domainId; // which domain of the subject this belongs to
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -27,6 +29,8 @@ class Item {
     this.status = ItemStatus.pending,
     this.origin,
     this.weight,
+    this.grade,
+    this.domainId,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -55,6 +59,8 @@ class Item {
     ItemStatus? status,
     String? origin,
     double? weight,
+    double? grade,
+    String? domainId,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -69,6 +75,8 @@ class Item {
       status: status ?? this.status,
       origin: origin ?? this.origin,
       weight: weight ?? this.weight,
+      grade: grade ?? this.grade,
+      domainId: domainId ?? this.domainId,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -86,6 +94,8 @@ class Item {
       'status': status.name,
       'origin': origin,
       'weight': weight,
+      'grade': grade,
+      'domainId': domainId,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
     };
@@ -110,7 +120,9 @@ class Item {
         orElse: () => ItemStatus.pending,
       ),
       origin: map['origin'] as String?,
-      weight: map['weight'] as double?,
+      weight: (map['weight'] as num?)?.toDouble(),
+      grade: (map['grade'] as num?)?.toDouble(),
+      domainId: map['domainId'] as String?,
       createdAt: DateTime.parse(map['createdAt'] as String),
       updatedAt: DateTime.parse(map['updatedAt'] as String),
     );
