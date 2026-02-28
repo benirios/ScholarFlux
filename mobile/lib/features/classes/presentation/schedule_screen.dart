@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/colors.dart';
 import '../../../core/theme/typography.dart';
+import '../../../core/widgets/glass_container.dart';
+import '../../../core/widgets/glass_helpers.dart';
 import '../../subjects/application/subjects_controller.dart';
 import '../application/classes_controller.dart';
 import '../domain/class_entry.dart';
@@ -44,13 +46,9 @@ class ScheduleScreen extends ConsumerWidget {
                 data: (classes) {
                   if (classes.isEmpty) {
                     return SliverToBoxAdapter(
-                      child: Container(
-                        width: double.infinity,
+                      child: GlassContainer(
+                        borderRadius: 20,
                         padding: const EdgeInsets.symmetric(vertical: 48),
-                        decoration: BoxDecoration(
-                          color: AppColors.surfaceCard,
-                          borderRadius: BorderRadius.circular(14),
-                        ),
                         child: Column(
                           children: [
                             Icon(Icons.schedule_rounded,
@@ -123,31 +121,15 @@ class ScheduleScreen extends ConsumerWidget {
   }
 
   void _confirmDelete(
-      BuildContext context, WidgetRef ref, ClassEntry entry) {
-    showDialog(
+      BuildContext context, WidgetRef ref, ClassEntry entry) async {
+    final confirmed = await showGlassConfirmDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.surfaceCard,
-        title: Text('Delete class?', style: AppTypography.cardTitle),
-        content: Text(
-            'Are you sure you want to delete this ${entry.weekdayLabel} class?',
-            style: AppTypography.body),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              ref.read(classesProvider.notifier).deleteClass(entry.id);
-              Navigator.pop(ctx);
-            },
-            child: Text('Delete',
-                style: TextStyle(color: AppColors.error)),
-          ),
-        ],
-      ),
+      title: 'Delete class?',
+      message: 'Are you sure you want to delete this ${entry.weekdayLabel} class?',
     );
+    if (confirmed == true) {
+      ref.read(classesProvider.notifier).deleteClass(entry.id);
+    }
   }
 }
 
@@ -166,17 +148,13 @@ class _ClassTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return GlassContainer(
+      borderRadius: 16,
+      padding: const EdgeInsets.all(14),
+      showHighlight: false,
       onTap: onTap,
       onLongPress: onDelete,
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: AppColors.surfaceCard,
-          borderRadius: BorderRadius.circular(14),
-        ),
-        child: Row(
+      child: Row(
           children: [
             // Time column
             Column(
@@ -240,7 +218,6 @@ class _ClassTile extends StatelessWidget {
                 color: AppColors.textTertiary, size: 20),
           ],
         ),
-      ),
     );
   }
 }

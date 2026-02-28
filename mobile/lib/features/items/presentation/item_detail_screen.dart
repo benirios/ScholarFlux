@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/colors.dart';
 import '../../../core/theme/typography.dart';
+import '../../../core/widgets/glass_container.dart';
+import '../../../core/widgets/glass_helpers.dart';
 import '../../subjects/application/subjects_controller.dart';
 import '../application/items_controller.dart';
 import '../domain/item.dart';
@@ -66,13 +68,9 @@ class ItemDetailScreen extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Item header card
-                Container(
-                  width: double.infinity,
+                GlassContainer(
+                  borderRadius: 20,
                   padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: AppColors.surfaceCard,
-                    borderRadius: BorderRadius.circular(14),
-                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -117,30 +115,53 @@ class ItemDetailScreen extends ConsumerWidget {
 
                 Text('Details', style: AppTypography.sectionTitle),
                 const SizedBox(height: 12),
-                _DetailRow(label: 'Type', value: item.type.label),
-                _DetailRow(
-                  label: 'Due date',
-                  value: item.dueDate != null
-                      ? '${item.dueDate!.day}/${item.dueDate!.month}/${item.dueDate!.year}'
-                      : '—',
+                GlassContainer(
+                  borderRadius: 16,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  showHighlight: false,
+                  child: Column(
+                    children: [
+                      _DetailRow(label: 'Type', value: item.type.label),
+                      const GlassDivider(),
+                      _DetailRow(
+                        label: 'Due date',
+                        value: item.dueDate != null
+                            ? '${item.dueDate!.day}/${item.dueDate!.month}/${item.dueDate!.year}'
+                            : '—',
+                      ),
+                      const GlassDivider(),
+                      _DetailRow(label: 'Priority', value: item.priority.label),
+                      const GlassDivider(),
+                      _DetailRow(label: 'Status', value: item.status.label),
+                      if (item.origin != null && item.origin!.isNotEmpty) ...[
+                        const GlassDivider(),
+                        _DetailRow(label: 'Origin', value: item.origin!),
+                      ],
+                      if (item.grade != null) ...[
+                        const GlassDivider(),
+                        _DetailRow(
+                            label: 'Grade',
+                            value: item.grade!.toStringAsFixed(1)),
+                      ],
+                      if (item.type == ItemType.test && item.weight != null) ...[
+                        const GlassDivider(),
+                        _DetailRow(
+                            label: 'Weight',
+                            value: '${item.weight!.toStringAsFixed(0)}%'),
+                      ],
+                    ],
+                  ),
                 ),
-                _DetailRow(label: 'Priority', value: item.priority.label),
-                _DetailRow(label: 'Status', value: item.status.label),
-                if (item.origin != null && item.origin!.isNotEmpty)
-                  _DetailRow(label: 'Origin', value: item.origin!),
-                if (item.grade != null)
-                  _DetailRow(
-                      label: 'Grade',
-                      value: item.grade!.toStringAsFixed(1)),
-                if (item.type == ItemType.test && item.weight != null)
-                  _DetailRow(
-                      label: 'Weight',
-                      value: '${item.weight!.toStringAsFixed(0)}%'),
                 if (item.description.isNotEmpty) ...[
                   const SizedBox(height: 16),
                   Text('Description', style: AppTypography.sectionTitle),
                   const SizedBox(height: 8),
-                  Text(item.description, style: AppTypography.body),
+                  GlassContainer(
+                    borderRadius: 14,
+                    padding: const EdgeInsets.all(14),
+                    showHighlight: false,
+                    child: Text(item.description, style: AppTypography.body),
+                  ),
                 ],
               ],
             ),
@@ -152,25 +173,10 @@ class ItemDetailScreen extends ConsumerWidget {
 
   Future<void> _confirmDelete(
       BuildContext context, WidgetRef ref, Item item) async {
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showGlassConfirmDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.surfaceCard,
-        title: Text('Delete item?', style: AppTypography.cardTitle),
-        content: Text(
-          'This will permanently delete "${item.title}".',
-          style: AppTypography.body,
-        ),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Cancel')),
-          TextButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              child:
-                  Text('Delete', style: TextStyle(color: AppColors.error))),
-        ],
-      ),
+      title: 'Delete item?',
+      message: 'This will permanently delete "${item.title}".',
     );
     if (confirmed == true) {
       await ref.read(itemsProvider.notifier).deleteItem(item.id);

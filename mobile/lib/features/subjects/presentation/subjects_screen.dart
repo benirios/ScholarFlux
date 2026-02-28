@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/colors.dart';
+import '../../../core/widgets/glass_container.dart';
 import '../../../core/theme/typography.dart';
 import '../../items/application/items_controller.dart';
 import '../../items/domain/item.dart';
@@ -70,6 +71,9 @@ class SubjectsScreen extends ConsumerWidget {
                         ),
                       ),
               ),
+              const SliverToBoxAdapter(
+                child: SizedBox(height: 80),
+              ),
             ],
           ),
         ),
@@ -90,19 +94,12 @@ class _SubjectCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final itemsAsync = ref.watch(itemsBySubjectProvider(subject.id));
 
-    return GestureDetector(
+    return GlassContainer(
       onTap: () => context.goNamed(
         'subject-detail',
         pathParameters: {'subjectId': subject.id},
       ),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: AppColors.surfaceCard,
-          borderRadius: BorderRadius.circular(14),
-        ),
-        child: Column(
+      child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
@@ -131,7 +128,6 @@ class _SubjectCard extends ConsumerWidget {
             ],
           ],
         ),
-      ),
     );
   }
 }

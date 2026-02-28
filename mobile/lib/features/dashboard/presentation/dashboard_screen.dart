@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/colors.dart';
 import '../../../core/theme/typography.dart';
+import '../../../core/widgets/glass_container.dart';
 import '../../items/application/items_controller.dart';
 import '../../items/domain/item.dart';
 import '../../items/domain/item_type.dart';
@@ -49,7 +50,7 @@ class DashboardScreen extends ConsumerWidget {
 
               // "Aulas" section (today's classes)
               SliverToBoxAdapter(
-                child: Text('Classes', style: AppTypography.sectionTitle),
+                child: Text('Classes'.toUpperCase(), style: AppTypography.sectionTitle.copyWith(letterSpacing: 0.5)),
               ),
               const SliverToBoxAdapter(child: SizedBox(height: 8)),
               todayClassesAsync.when(
@@ -72,13 +73,9 @@ class DashboardScreen extends ConsumerWidget {
                             final c = classes[index];
                             return Padding(
                               padding: const EdgeInsets.only(bottom: 8),
-                              child: Container(
-                                width: double.infinity,
+                              child: GlassContainer(
+                                borderRadius: 20,
                                 padding: const EdgeInsets.all(14),
-                                decoration: BoxDecoration(
-                                  color: AppColors.surfaceCard,
-                                  borderRadius: BorderRadius.circular(14),
-                                ),
                                 child: Row(
                                   children: [
                                     Column(
@@ -137,7 +134,7 @@ class DashboardScreen extends ConsumerWidget {
 
               // "Upcoming" section
               SliverToBoxAdapter(
-                child: Text('Upcoming', style: AppTypography.sectionTitle),
+                child: Text('Upcoming'.toUpperCase(), style: AppTypography.sectionTitle.copyWith(letterSpacing: 0.5)),
               ),
               const SliverToBoxAdapter(child: SizedBox(height: 8)),
               upcomingAsync.when(
@@ -172,8 +169,8 @@ class DashboardScreen extends ConsumerWidget {
 
               // "Trabalhos futuros" section
               SliverToBoxAdapter(
-                child: Text('Future work',
-                    style: AppTypography.sectionTitle),
+                child: Text('Future work'.toUpperCase(),
+                    style: AppTypography.sectionTitle.copyWith(letterSpacing: 0.5)),
               ),
               const SliverToBoxAdapter(child: SizedBox(height: 8)),
               futureAsync.when(
@@ -204,6 +201,7 @@ class DashboardScreen extends ConsumerWidget {
                         ),
                       ),
               ),
+              const SliverToBoxAdapter(child: SizedBox(height: 80)),
               const SliverToBoxAdapter(child: SizedBox(height: 32)),
             ],
           ),
@@ -221,7 +219,9 @@ class _ItemCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return GlassContainer(
+      borderRadius: 20,
+      padding: const EdgeInsets.all(14),
       onTap: () => context.goNamed(
         'item-detail',
         pathParameters: {
@@ -229,14 +229,7 @@ class _ItemCard extends StatelessWidget {
           'itemId': item.id,
         },
       ),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: AppColors.surfaceCard,
-          borderRadius: BorderRadius.circular(14),
-        ),
-        child: Row(
+      child: Row(
           children: [
             Expanded(
               child: Column(
@@ -272,7 +265,7 @@ class _ItemCard extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                     decoration: BoxDecoration(
-                      color: AppColors.primary.withValues(alpha: 0.1),
+                      color: AppColors.primaryGlow,
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
@@ -285,7 +278,6 @@ class _ItemCard extends StatelessWidget {
             ),
           ],
         ),
-      ),
     );
   }
 }
@@ -381,13 +373,9 @@ class _PlaceholderCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
+    return GlassContainer(
+      borderRadius: 20,
       padding: const EdgeInsets.symmetric(vertical: 32),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceCard,
-        borderRadius: BorderRadius.circular(14),
-      ),
       child: Column(
         children: [
           Icon(icon, size: 36, color: AppColors.textTertiary),

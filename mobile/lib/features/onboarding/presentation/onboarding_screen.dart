@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/colors.dart';
 import '../../../core/theme/typography.dart';
+import '../../../core/widgets/glass_container.dart';
 
 class OnboardingScreen extends StatelessWidget {
   const OnboardingScreen({super.key});
@@ -53,11 +54,19 @@ class _OnboardingPage extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, size: 72, color: AppColors.primary),
-          const SizedBox(height: 32),
-          Text(title, style: AppTypography.headerLarge, textAlign: TextAlign.center),
-          const SizedBox(height: 12),
-          Text(subtitle, style: AppTypography.cardSubtitle, textAlign: TextAlign.center),
+          GlassContainer(
+            borderRadius: 28,
+            padding: const EdgeInsets.all(28),
+            child: Column(
+              children: [
+                Icon(icon, size: 72, color: AppColors.primary),
+                const SizedBox(height: 24),
+                Text(title, style: AppTypography.headerLarge, textAlign: TextAlign.center),
+                const SizedBox(height: 12),
+                Text(subtitle, style: AppTypography.cardSubtitle, textAlign: TextAlign.center),
+              ],
+            ),
+          ),
         ],
       ),
     );

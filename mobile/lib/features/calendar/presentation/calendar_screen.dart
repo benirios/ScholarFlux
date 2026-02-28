@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/colors.dart';
 import '../../../core/theme/typography.dart';
+import '../../../core/widgets/glass_container.dart';
 import '../../items/application/items_controller.dart';
 import '../../items/domain/item.dart';
 import '../../subjects/application/subjects_controller.dart';
@@ -143,42 +144,46 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
               const SliverToBoxAdapter(child: SizedBox(height: 8)),
               // Calendar grid
               SliverToBoxAdapter(
-                child: monthItemsAsync.when(
-                  data: (items) {
-                    final daysWithItems = <int>{};
-                    for (final item in items) {
-                      if (item.dueDate != null) {
-                        daysWithItems.add(item.dueDate!.day);
+                child: GlassContainer(
+                  borderRadius: 20,
+                  padding: const EdgeInsets.all(12),
+                  child: monthItemsAsync.when(
+                    data: (items) {
+                      final daysWithItems = <int>{};
+                      for (final item in items) {
+                        if (item.dueDate != null) {
+                          daysWithItems.add(item.dueDate!.day);
+                        }
                       }
-                    }
-                    return _CalendarGrid(
+                      return _CalendarGrid(
+                        daysInMonth: daysInMonth,
+                        firstWeekday: firstWeekday,
+                        today: (_selectedYear == now.year &&
+                                _selectedMonth == now.month)
+                            ? now.day
+                            : null,
+                        daysWithItems: daysWithItems,
+                        selectedDay: _selectedDay,
+                        onDayTap: (day) {
+                          setState(() {
+                            _selectedDay = _selectedDay == day ? null : day;
+                          });
+                        },
+                      );
+                    },
+                    loading: () => _CalendarGrid(
                       daysInMonth: daysInMonth,
                       firstWeekday: firstWeekday,
                       today: (_selectedYear == now.year &&
                               _selectedMonth == now.month)
                           ? now.day
                           : null,
-                      daysWithItems: daysWithItems,
+                      daysWithItems: const {},
                       selectedDay: _selectedDay,
-                      onDayTap: (day) {
-                        setState(() {
-                          _selectedDay = _selectedDay == day ? null : day;
-                        });
-                      },
-                    );
-                  },
-                  loading: () => _CalendarGrid(
-                    daysInMonth: daysInMonth,
-                    firstWeekday: firstWeekday,
-                    today: (_selectedYear == now.year &&
-                            _selectedMonth == now.month)
-                        ? now.day
-                        : null,
-                    daysWithItems: const {},
-                    selectedDay: _selectedDay,
-                    onDayTap: (_) {},
+                      onDayTap: (_) {},
+                    ),
+                    error: (_, _) => const SizedBox.shrink(),
                   ),
-                  error: (_, _) => const SizedBox.shrink(),
                 ),
               ),
               const SliverToBoxAdapter(child: SizedBox(height: 24)),
@@ -264,13 +269,9 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       data: (items) {
         if (items.isEmpty) {
           return SliverToBoxAdapter(
-            child: Container(
-              width: double.infinity,
+            child: GlassContainer(
+              borderRadius: 20,
               padding: const EdgeInsets.symmetric(vertical: 32),
-              decoration: BoxDecoration(
-                color: AppColors.surfaceCard,
-                borderRadius: BorderRadius.circular(14),
-              ),
               child: Column(
                 children: [
                   Icon(Icons.event_note_rounded,
@@ -397,8 +398,10 @@ class _FutureWorkTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+    return GlassContainer(
+      borderRadius: 14,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      showHighlight: false,
       child: Row(
         children: [
           Expanded(

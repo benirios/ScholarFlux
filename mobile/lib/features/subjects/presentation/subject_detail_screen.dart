@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/colors.dart';
+import '../../../core/widgets/glass_container.dart';
+import '../../../core/widgets/glass_helpers.dart';
 import '../../../core/theme/typography.dart';
 import '../../items/application/items_controller.dart';
 import '../../items/domain/item.dart';
@@ -118,25 +120,10 @@ class SubjectDetailScreen extends ConsumerWidget {
 
   Future<void> _confirmDelete(
       BuildContext context, WidgetRef ref, Subject subject) async {
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showGlassConfirmDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.surfaceCard,
-        title: Text('Delete subject?', style: AppTypography.cardTitle),
-        content: Text(
-          'This will permanently delete "${subject.name}" and all its items.',
-          style: AppTypography.body,
-        ),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Cancel')),
-          TextButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              child: Text('Delete',
-                  style: TextStyle(color: AppColors.error))),
-        ],
-      ),
+      title: 'Delete subject?',
+      message: 'This will permanently delete "${subject.name}" and all its items.',
     );
     if (confirmed == true) {
       await ref
@@ -157,13 +144,9 @@ class _SubjectHeaderCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
+    return GlassContainer(
+      borderRadius: 20,
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceCard,
-        borderRadius: BorderRadius.circular(14),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -225,7 +208,9 @@ class _ItemTile extends StatelessWidget {
       domainName = domain?.name;
     }
     
-    return GestureDetector(
+    return GlassContainer(
+      borderRadius: 16,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       onTap: () => context.goNamed(
         'item-detail',
         pathParameters: {
@@ -233,13 +218,7 @@ class _ItemTile extends StatelessWidget {
           'itemId': item.id,
         },
       ),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        decoration: BoxDecoration(
-          color: AppColors.surfaceCardLight,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Row(
+      child: Row(
           children: [
             // Status indicator
             Icon(
@@ -293,7 +272,7 @@ class _ItemTile extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: AppColors.primary.withValues(alpha: 0.1),
+                      color: AppColors.primaryGlow,
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
@@ -327,7 +306,6 @@ class _ItemTile extends StatelessWidget {
             ),
           ],
         ),
-      ),
     );
   }
 }

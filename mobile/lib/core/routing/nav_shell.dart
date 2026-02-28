@@ -1,8 +1,9 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../theme/colors.dart';
 
-/// Bottom navigation shell wrapping Dashboard, Subjects, and Calendar tabs.
+/// Bottom navigation shell with a floating Liquid Glass tab bar.
 class NavShell extends StatelessWidget {
   final StatefulNavigationShell navigationShell;
 
@@ -12,36 +13,89 @@ class NavShell extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: navigationShell,
-      bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
-          border: Border(
-            top: BorderSide(color: AppColors.divider, width: 0.5),
+      extendBody: true,
+      bottomNavigationBar: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(24),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.white.withValues(alpha: 0.10),
+                    Colors.white.withValues(alpha: 0.05),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(
+                  color: AppColors.glassBorder,
+                  width: 0.5,
+                ),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Specular highlight edge
+                  Container(
+                    height: 1,
+                    margin: const EdgeInsets.symmetric(horizontal: 40),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          Colors.white.withValues(alpha: 0.0),
+                          AppColors.glassHighlight,
+                          Colors.white.withValues(alpha: 0.0),
+                        ],
+                      ),
+                    ),
+                  ),
+                  Theme(
+                    data: Theme.of(context).copyWith(
+                      splashColor: Colors.transparent,
+                      highlightColor: Colors.transparent,
+                    ),
+                    child: BottomNavigationBar(
+                      currentIndex: navigationShell.currentIndex,
+                      onTap: (index) => navigationShell.goBranch(
+                        index,
+                        initialLocation:
+                            index == navigationShell.currentIndex,
+                      ),
+                      backgroundColor: Colors.transparent,
+                      elevation: 0,
+                      type: BottomNavigationBarType.fixed,
+                      selectedItemColor: AppColors.primary,
+                      unselectedItemColor: AppColors.textTertiary,
+                      selectedFontSize: 11,
+                      unselectedFontSize: 11,
+                      items: const [
+                        BottomNavigationBarItem(
+                          icon: Icon(Icons.dashboard_rounded),
+                          label: 'Dashboard',
+                        ),
+                        BottomNavigationBarItem(
+                          icon: Icon(Icons.book_rounded),
+                          label: 'Subjects',
+                        ),
+                        BottomNavigationBarItem(
+                          icon: Icon(Icons.calendar_month_rounded),
+                          label: 'Calendar',
+                        ),
+                        BottomNavigationBarItem(
+                          icon: Icon(Icons.schedule_rounded),
+                          label: 'Schedule',
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
-        ),
-        child: BottomNavigationBar(
-          currentIndex: navigationShell.currentIndex,
-          onTap: (index) => navigationShell.goBranch(
-            index,
-            initialLocation: index == navigationShell.currentIndex,
-          ),
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.dashboard_rounded),
-              label: 'Dashboard',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.book_rounded),
-              label: 'Subjects',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.calendar_month_rounded),
-              label: 'Calendar',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.schedule_rounded),
-              label: 'Schedule',
-            ),
-          ],
         ),
       ),
     );

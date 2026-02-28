@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/colors.dart';
 import '../../../core/theme/typography.dart';
+import '../../../core/widgets/glass_helpers.dart';
 import '../application/subjects_controller.dart';
 import '../domain/subject.dart';
 
@@ -96,24 +97,12 @@ class _EditSubjectScreenState extends ConsumerState<EditSubjectScreen> {
     if (domains.isNotEmpty) {
       final totalWeight = domains.fold<double>(0, (s, d) => s + d.weight);
       if ((totalWeight - 100).abs() > 0.01) {
-        final proceed = await showDialog<bool>(
+        final proceed = await showGlassConfirmDialog(
           context: context,
-          builder: (ctx) => AlertDialog(
-            backgroundColor: AppColors.surfaceCard,
-            title: Text('Domain weights', style: AppTypography.cardTitle),
-            content: Text(
-              'Domain weights sum to ${totalWeight.toStringAsFixed(0)}% instead of 100%. Continue anyway?',
-              style: AppTypography.body,
-            ),
-            actions: [
-              TextButton(
-                  onPressed: () => Navigator.pop(ctx, false),
-                  child: const Text('Cancel')),
-              TextButton(
-                  onPressed: () => Navigator.pop(ctx, true),
-                  child: const Text('Continue')),
-            ],
-          ),
+          title: 'Domain weights',
+          message: 'Domain weights sum to ${totalWeight.toStringAsFixed(0)}% instead of 100%. Continue anyway?',
+          confirmLabel: 'Continue',
+          confirmColor: AppColors.primary,
         );
         if (proceed != true) return;
       }
