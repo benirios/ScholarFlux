@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/colors.dart';
 import '../../../core/theme/typography.dart';
+import '../../../core/widgets/animations.dart';
 import '../../../core/widgets/glass_container.dart';
 import '../../items/application/items_controller.dart';
 import '../../items/domain/item.dart';
@@ -71,7 +72,9 @@ class DashboardScreen extends ConsumerWidget {
                         delegate: SliverChildBuilderDelegate(
                           (context, index) {
                             final c = classes[index];
-                            return Padding(
+                            return AnimatedListItem(
+                              index: index,
+                              child: Padding(
                               padding: const EdgeInsets.only(bottom: 8),
                               child: GlassContainer(
                                 borderRadius: 20,
@@ -122,6 +125,7 @@ class DashboardScreen extends ConsumerWidget {
                                       ),
                                     ),
                                   ],
+                                  ),
                                 ),
                               ),
                             );
@@ -153,12 +157,15 @@ class DashboardScreen extends ConsumerWidget {
                       )
                     : SliverList(
                         delegate: SliverChildBuilderDelegate(
-                          (context, index) => Padding(
-                            padding: const EdgeInsets.only(bottom: 8),
-                            child: _ItemCard(
-                              item: items[index],
-                              subjectName:
-                                  subjectNames[items[index].subjectId],
+                          (context, index) => AnimatedListItem(
+                            index: index,
+                            child: Padding(
+                              padding: const EdgeInsets.only(bottom: 8),
+                              child: _ItemCard(
+                                item: items[index],
+                                subjectName:
+                                    subjectNames[items[index].subjectId],
+                              ),
                             ),
                           ),
                           childCount: items.length,
@@ -189,12 +196,15 @@ class DashboardScreen extends ConsumerWidget {
                       )
                     : SliverList(
                         delegate: SliverChildBuilderDelegate(
-                          (context, index) => Padding(
-                            padding: const EdgeInsets.only(bottom: 8),
-                            child: _ItemCard(
-                              item: items[index],
-                              subjectName:
-                                  subjectNames[items[index].subjectId],
+                          (context, index) => AnimatedListItem(
+                            index: index,
+                            child: Padding(
+                              padding: const EdgeInsets.only(bottom: 8),
+                              child: _ItemCard(
+                                item: items[index],
+                                subjectName:
+                                    subjectNames[items[index].subjectId],
+                              ),
                             ),
                           ),
                           childCount: items.length,

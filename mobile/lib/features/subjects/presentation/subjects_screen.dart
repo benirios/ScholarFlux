@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/colors.dart';
 import '../../../core/widgets/glass_container.dart';
+import '../../../core/widgets/animations.dart';
 import '../../../core/theme/typography.dart';
 import '../../items/application/items_controller.dart';
 import '../../items/domain/item.dart';
@@ -63,9 +64,12 @@ class SubjectsScreen extends ConsumerWidget {
                       )
                     : SliverList(
                         delegate: SliverChildBuilderDelegate(
-                          (context, index) => Padding(
-                            padding: const EdgeInsets.only(bottom: 12),
-                            child: _SubjectCard(subject: subjects[index]),
+                          (context, index) => AnimatedListItem(
+                            index: index,
+                            child: Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: _SubjectCard(subject: subjects[index]),
+                            ),
                           ),
                           childCount: subjects.length,
                         ),

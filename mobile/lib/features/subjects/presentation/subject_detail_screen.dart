@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme/colors.dart';
 import '../../../core/widgets/glass_container.dart';
 import '../../../core/widgets/glass_helpers.dart';
+import '../../../core/widgets/animations.dart';
 import '../../../core/theme/typography.dart';
 import '../../items/application/items_controller.dart';
 import '../../items/domain/item.dart';
@@ -97,9 +98,12 @@ class SubjectDetailScreen extends ConsumerWidget {
                             separatorBuilder: (_, _) =>
                                 const SizedBox(height: 8),
                             itemBuilder: (context, index) =>
-                                _ItemTile(
-                                    item: items[index],
-                                    subject: subject),
+                                AnimatedListItem(
+                                  index: index,
+                                  child: _ItemTile(
+                                      item: items[index],
+                                      subject: subject),
+                                ),
                           ),
                   ),
                 ),

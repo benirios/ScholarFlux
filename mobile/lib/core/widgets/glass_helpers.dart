@@ -93,25 +93,3 @@ Future<bool?> showGlassConfirmDialog({
     ),
   );
 }
-
-/// A Liquid Glass section divider — subtle horizontal line with glow.
-class GlassDivider extends StatelessWidget {
-  const GlassDivider({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 0.5,
-      margin: const EdgeInsets.symmetric(vertical: 12),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            Colors.white.withValues(alpha: 0.0),
-            AppColors.glassBorder,
-            Colors.white.withValues(alpha: 0.0),
-          ],
-        ),
-      ),
-    );
-  }
-}

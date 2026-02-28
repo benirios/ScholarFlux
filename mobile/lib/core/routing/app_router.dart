@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'nav_shell.dart';
 import '../../features/onboarding/presentation/onboarding_screen.dart';
@@ -10,6 +11,29 @@ import '../../features/items/presentation/item_detail_screen.dart';
 import '../../features/calendar/presentation/calendar_screen.dart';
 import '../../features/classes/presentation/schedule_screen.dart';
 import '../../features/classes/presentation/edit_class_screen.dart';
+
+/// Smooth fade+slide page transition for inner routes.
+CustomTransitionPage<void> _fadeSlide(GoRouterState state, Widget child) {
+  return CustomTransitionPage(
+    key: state.pageKey,
+    child: child,
+    transitionDuration: const Duration(milliseconds: 300),
+    reverseTransitionDuration: const Duration(milliseconds: 250),
+    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+      final curved = CurvedAnimation(parent: animation, curve: Curves.easeOutCubic);
+      return FadeTransition(
+        opacity: curved,
+        child: SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(0.04, 0),
+            end: Offset.zero,
+          ).animate(curved),
+          child: child,
+        ),
+      );
+    },
+  );
+}
 
 final goRouter = GoRouter(
   initialLocation: '/dashboard',
@@ -44,51 +68,52 @@ final goRouter = GoRouter(
                 GoRoute(
                   path: 'new',
                   name: 'new-subject',
-                  builder: (context, state) => const EditSubjectScreen(),
+                  pageBuilder: (context, state) =>
+                      _fadeSlide(state, const EditSubjectScreen()),
                 ),
                 GoRoute(
                   path: ':subjectId',
                   name: 'subject-detail',
-                  builder: (context, state) {
+                  pageBuilder: (context, state) {
                     final subjectId = state.pathParameters['subjectId']!;
-                    return SubjectDetailScreen(subjectId: subjectId);
+                    return _fadeSlide(state, SubjectDetailScreen(subjectId: subjectId));
                   },
                   routes: [
                     GoRoute(
                       path: 'edit',
                       name: 'edit-subject',
-                      builder: (context, state) {
+                      pageBuilder: (context, state) {
                         final subjectId = state.pathParameters['subjectId']!;
-                        return EditSubjectScreen(subjectId: subjectId);
+                        return _fadeSlide(state, EditSubjectScreen(subjectId: subjectId));
                       },
                     ),
                     GoRoute(
                       path: 'items/new',
                       name: 'new-item',
-                      builder: (context, state) {
+                      pageBuilder: (context, state) {
                         final subjectId = state.pathParameters['subjectId']!;
-                        return EditItemScreen(subjectId: subjectId);
+                        return _fadeSlide(state, EditItemScreen(subjectId: subjectId));
                       },
                     ),
                     GoRoute(
                       path: 'items/:itemId',
                       name: 'item-detail',
-                      builder: (context, state) {
+                      pageBuilder: (context, state) {
                         final itemId = state.pathParameters['itemId']!;
-                        return ItemDetailScreen(itemId: itemId);
+                        return _fadeSlide(state, ItemDetailScreen(itemId: itemId));
                       },
                       routes: [
                         GoRoute(
                           path: 'edit',
                           name: 'edit-item',
-                          builder: (context, state) {
+                          pageBuilder: (context, state) {
                             final subjectId =
                                 state.pathParameters['subjectId']!;
                             final itemId = state.pathParameters['itemId']!;
-                            return EditItemScreen(
+                            return _fadeSlide(state, EditItemScreen(
                               subjectId: subjectId,
                               itemId: itemId,
-                            );
+                            ));
                           },
                         ),
                       ],
@@ -120,14 +145,15 @@ final goRouter = GoRouter(
                 GoRoute(
                   path: 'new',
                   name: 'new-class',
-                  builder: (context, state) => const EditClassScreen(),
+                  pageBuilder: (context, state) =>
+                      _fadeSlide(state, const EditClassScreen()),
                 ),
                 GoRoute(
                   path: ':classId/edit',
                   name: 'edit-class',
-                  builder: (context, state) {
+                  pageBuilder: (context, state) {
                     final classId = state.pathParameters['classId']!;
-                    return EditClassScreen(classId: classId);
+                    return _fadeSlide(state, EditClassScreen(classId: classId));
                   },
                 ),
               ],

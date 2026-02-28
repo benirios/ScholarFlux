@@ -36,23 +36,8 @@ class NavShell extends StatelessWidget {
                   width: 0.5,
                 ),
               ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
+              child: Stack(
                 children: [
-                  // Specular highlight edge
-                  Container(
-                    height: 1,
-                    margin: const EdgeInsets.symmetric(horizontal: 40),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          Colors.white.withValues(alpha: 0.0),
-                          AppColors.glassHighlight,
-                          Colors.white.withValues(alpha: 0.0),
-                        ],
-                      ),
-                    ),
-                  ),
                   Theme(
                     data: Theme.of(context).copyWith(
                       splashColor: Colors.transparent,
@@ -90,6 +75,24 @@ class NavShell extends StatelessWidget {
                           label: 'Schedule',
                         ),
                       ],
+                    ),
+                  ),
+                  // Specular highlight overlaid at top
+                  Positioned(
+                    top: 0.5,
+                    left: 40,
+                    right: 40,
+                    child: Container(
+                      height: 1,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.white.withValues(alpha: 0.0),
+                            AppColors.glassHighlight,
+                            Colors.white.withValues(alpha: 0.0),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
                 ],

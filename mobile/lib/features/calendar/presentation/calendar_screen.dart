@@ -144,46 +144,42 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
               const SliverToBoxAdapter(child: SizedBox(height: 8)),
               // Calendar grid
               SliverToBoxAdapter(
-                child: GlassContainer(
-                  borderRadius: 20,
-                  padding: const EdgeInsets.all(12),
-                  child: monthItemsAsync.when(
-                    data: (items) {
-                      final daysWithItems = <int>{};
-                      for (final item in items) {
-                        if (item.dueDate != null) {
-                          daysWithItems.add(item.dueDate!.day);
-                        }
+                child: monthItemsAsync.when(
+                  data: (items) {
+                    final daysWithItems = <int>{};
+                    for (final item in items) {
+                      if (item.dueDate != null) {
+                        daysWithItems.add(item.dueDate!.day);
                       }
-                      return _CalendarGrid(
-                        daysInMonth: daysInMonth,
-                        firstWeekday: firstWeekday,
-                        today: (_selectedYear == now.year &&
-                                _selectedMonth == now.month)
-                            ? now.day
-                            : null,
-                        daysWithItems: daysWithItems,
-                        selectedDay: _selectedDay,
-                        onDayTap: (day) {
-                          setState(() {
-                            _selectedDay = _selectedDay == day ? null : day;
-                          });
-                        },
-                      );
-                    },
-                    loading: () => _CalendarGrid(
+                    }
+                    return _CalendarGrid(
                       daysInMonth: daysInMonth,
                       firstWeekday: firstWeekday,
                       today: (_selectedYear == now.year &&
                               _selectedMonth == now.month)
                           ? now.day
                           : null,
-                      daysWithItems: const {},
+                      daysWithItems: daysWithItems,
                       selectedDay: _selectedDay,
-                      onDayTap: (_) {},
-                    ),
-                    error: (_, _) => const SizedBox.shrink(),
+                      onDayTap: (day) {
+                        setState(() {
+                          _selectedDay = _selectedDay == day ? null : day;
+                        });
+                      },
+                    );
+                  },
+                  loading: () => _CalendarGrid(
+                    daysInMonth: daysInMonth,
+                    firstWeekday: firstWeekday,
+                    today: (_selectedYear == now.year &&
+                            _selectedMonth == now.month)
+                        ? now.day
+                        : null,
+                    daysWithItems: const {},
+                    selectedDay: _selectedDay,
+                    onDayTap: (_) {},
                   ),
+                  error: (_, _) => const SizedBox.shrink(),
                 ),
               ),
               const SliverToBoxAdapter(child: SizedBox(height: 24)),
@@ -398,10 +394,8 @@ class _FutureWorkTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GlassContainer(
-      borderRadius: 14,
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      showHighlight: false,
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         children: [
           Expanded(

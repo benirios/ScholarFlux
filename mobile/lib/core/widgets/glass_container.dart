@@ -1,12 +1,13 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../theme/colors.dart';
+import 'animations.dart';
 
 /// A frosted-glass container inspired by Apple's Liquid Glass design.
 ///
 /// Applies a backdrop blur + translucent fill + specular highlight edge +
-/// subtle border for depth.  Set [showHighlight] to false to omit the top
-/// specular edge (useful for compact/inline variants).
+/// subtle border for depth.  The highlight is overlaid with a Stack so it
+/// never changes the child's layout or proportions.
 class GlassContainer extends StatelessWidget {
   final Widget child;
   final EdgeInsetsGeometry? padding;
@@ -16,7 +17,6 @@ class GlassContainer extends StatelessWidget {
   final Color? fillColor;
   final VoidCallback? onTap;
   final VoidCallback? onLongPress;
-  final bool showHighlight;
 
   const GlassContainer({
     super.key,
@@ -28,7 +28,6 @@ class GlassContainer extends StatelessWidget {
     this.fillColor,
     this.onTap,
     this.onLongPress,
-    this.showHighlight = true,
   });
 
   @override
@@ -37,47 +36,47 @@ class GlassContainer extends StatelessWidget {
       borderRadius: BorderRadius.circular(borderRadius),
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: blurSigma, sigmaY: blurSigma),
-        child: Container(
-          width: double.infinity,
-          padding: padding,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                (fillColor ?? AppColors.glassFill).withValues(alpha: 0.12),
-                (fillColor ?? AppColors.glassFill).withValues(alpha: 0.06),
-              ],
+        child: Stack(
+          children: [
+            Container(
+              width: double.infinity,
+              padding: padding,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    (fillColor ?? AppColors.glassFill).withValues(alpha: 0.12),
+                    (fillColor ?? AppColors.glassFill).withValues(alpha: 0.06),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(borderRadius),
+                border: Border.all(
+                  color: AppColors.glassBorder,
+                  width: 0.5,
+                ),
+              ),
+              child: child,
             ),
-            borderRadius: BorderRadius.circular(borderRadius),
-            border: Border.all(
-              color: AppColors.glassBorder,
-              width: 0.5,
-            ),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              if (showHighlight)
-                Container(
-                  height: 1,
-                  margin: EdgeInsets.symmetric(
-                    horizontal: borderRadius * 0.6,
-                  ),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        Colors.white.withValues(alpha: 0.0),
-                        AppColors.glassHighlight,
-                        Colors.white.withValues(alpha: 0.0),
-                      ],
-                    ),
+            // Specular highlight overlaid at the top edge
+            Positioned(
+              top: 0.5,
+              left: borderRadius * 0.6,
+              right: borderRadius * 0.6,
+              child: Container(
+                height: 1,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Colors.white.withValues(alpha: 0.0),
+                      AppColors.glassHighlight,
+                      Colors.white.withValues(alpha: 0.0),
+                    ],
                   ),
                 ),
-              child,
-            ],
-          ),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -87,7 +86,7 @@ class GlassContainer extends StatelessWidget {
     }
 
     if (onTap != null || onLongPress != null) {
-      content = GestureDetector(
+      content = TapScale(
         onTap: onTap,
         onLongPress: onLongPress,
         child: content,

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/colors.dart';
 import '../../../core/theme/typography.dart';
+import '../../../core/widgets/animations.dart';
 import '../../../core/widgets/glass_container.dart';
 import '../../../core/widgets/glass_helpers.dart';
 import '../../subjects/application/subjects_controller.dart';
@@ -102,7 +103,10 @@ class ScheduleScreen extends ConsumerWidget {
 
                   return SliverList(
                     delegate: SliverChildBuilderDelegate(
-                      (_, i) => widgets[i],
+                      (_, i) => AnimatedListItem(
+                        index: i,
+                        child: widgets[i],
+                      ),
                       childCount: widgets.length,
                     ),
                   );
@@ -151,7 +155,6 @@ class _ClassTile extends StatelessWidget {
     return GlassContainer(
       borderRadius: 16,
       padding: const EdgeInsets.all(14),
-      showHighlight: false,
       onTap: onTap,
       onLongPress: onDelete,
       child: Row(

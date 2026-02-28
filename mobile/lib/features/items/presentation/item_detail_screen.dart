@@ -115,53 +115,30 @@ class ItemDetailScreen extends ConsumerWidget {
 
                 Text('Details', style: AppTypography.sectionTitle),
                 const SizedBox(height: 12),
-                GlassContainer(
-                  borderRadius: 16,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  showHighlight: false,
-                  child: Column(
-                    children: [
-                      _DetailRow(label: 'Type', value: item.type.label),
-                      const GlassDivider(),
-                      _DetailRow(
-                        label: 'Due date',
-                        value: item.dueDate != null
-                            ? '${item.dueDate!.day}/${item.dueDate!.month}/${item.dueDate!.year}'
-                            : '—',
-                      ),
-                      const GlassDivider(),
-                      _DetailRow(label: 'Priority', value: item.priority.label),
-                      const GlassDivider(),
-                      _DetailRow(label: 'Status', value: item.status.label),
-                      if (item.origin != null && item.origin!.isNotEmpty) ...[
-                        const GlassDivider(),
-                        _DetailRow(label: 'Origin', value: item.origin!),
-                      ],
-                      if (item.grade != null) ...[
-                        const GlassDivider(),
-                        _DetailRow(
-                            label: 'Grade',
-                            value: item.grade!.toStringAsFixed(1)),
-                      ],
-                      if (item.type == ItemType.test && item.weight != null) ...[
-                        const GlassDivider(),
-                        _DetailRow(
-                            label: 'Weight',
-                            value: '${item.weight!.toStringAsFixed(0)}%'),
-                      ],
-                    ],
-                  ),
+                _DetailRow(label: 'Type', value: item.type.label),
+                _DetailRow(
+                  label: 'Due date',
+                  value: item.dueDate != null
+                      ? '${item.dueDate!.day}/${item.dueDate!.month}/${item.dueDate!.year}'
+                      : '—',
                 ),
+                _DetailRow(label: 'Priority', value: item.priority.label),
+                _DetailRow(label: 'Status', value: item.status.label),
+                if (item.origin != null && item.origin!.isNotEmpty)
+                  _DetailRow(label: 'Origin', value: item.origin!),
+                if (item.grade != null)
+                  _DetailRow(
+                      label: 'Grade',
+                      value: item.grade!.toStringAsFixed(1)),
+                if (item.type == ItemType.test && item.weight != null)
+                  _DetailRow(
+                      label: 'Weight',
+                      value: '${item.weight!.toStringAsFixed(0)}%'),
                 if (item.description.isNotEmpty) ...[
                   const SizedBox(height: 16),
                   Text('Description', style: AppTypography.sectionTitle),
                   const SizedBox(height: 8),
-                  GlassContainer(
-                    borderRadius: 14,
-                    padding: const EdgeInsets.all(14),
-                    showHighlight: false,
-                    child: Text(item.description, style: AppTypography.body),
-                  ),
+                  Text(item.description, style: AppTypography.body),
                 ],
               ],
             ),
