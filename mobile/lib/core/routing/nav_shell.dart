@@ -15,7 +15,7 @@ class NavShell extends StatelessWidget {
       body: navigationShell,
       extendBody: true,
       bottomNavigationBar: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+        padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(24),
           child: BackdropFilter(
