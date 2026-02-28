@@ -83,6 +83,8 @@ class ItemsNotifier extends AsyncNotifier<List<Item>> {
 /// Items filtered by subject.
 final itemsBySubjectProvider =
     FutureProvider.family<List<Item>, String>((ref, subjectId) async {
+  // Watch itemsProvider to auto-refresh when items change
+  await ref.watch(itemsProvider.future);
   final repo = ref.watch(itemRepositoryProvider);
   return repo.getBySubjectId(subjectId);
 });
