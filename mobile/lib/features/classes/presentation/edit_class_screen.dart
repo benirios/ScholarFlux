@@ -153,14 +153,14 @@ class _EditClassScreenState extends ConsumerState<EditClassScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(_isEditing ? 'Edit Class' : 'New Class'),
-        actions: [
-          TextButton(
-            onPressed: _save,
-            child: Text('Save',
-                style: TextStyle(color: AppColors.primary, fontSize: 16)),
-          ),
-        ],
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_rounded, size: 20),
+          onPressed: () => context.pop(),
+        ),
+        title: Text(
+          _isEditing ? 'Edit Class' : 'New Class',
+          style: AppTypography.cardTitle,
+        ),
       ),
       body: Form(
         key: _formKey,
@@ -168,8 +168,6 @@ class _EditClassScreenState extends ConsumerState<EditClassScreen> {
           padding: const EdgeInsets.all(16),
           children: [
             // Subject picker
-            Text('Subject', style: AppTypography.caption),
-            const SizedBox(height: 8),
             subjectsAsync.when(
               loading: () => const CircularProgressIndicator(),
               error: (e, _) => Text('Error: $e'),
@@ -183,12 +181,13 @@ class _EditClassScreenState extends ConsumerState<EditClassScreen> {
                   initialValue: _subjectId,
                   decoration: const InputDecoration(
                     hintText: 'Select subject',
-                    border: OutlineInputBorder(),
                   ),
+                  dropdownColor: AppColors.surfaceCard,
+                  style: AppTypography.body,
                   items: subjects
                       .map((s) => DropdownMenuItem(
                             value: s.id,
-                            child: Text(s.name),
+                            child: Text(s.name, style: AppTypography.body),
                           ))
                       .toList(),
                   onChanged: (v) => setState(() => _subjectId = v),
@@ -197,11 +196,9 @@ class _EditClassScreenState extends ConsumerState<EditClassScreen> {
                 );
               },
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
 
             // Day of week picker
-            Text('Day of week', style: AppTypography.caption),
-            const SizedBox(height: 8),
             Wrap(
               spacing: 8,
               children: List.generate(7, (i) {
@@ -224,111 +221,95 @@ class _EditClassScreenState extends ConsumerState<EditClassScreen> {
                 );
               }),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
 
             // Time pickers
             Row(
               children: [
                 Expanded(
-                  child: _TimePicker(
-                    label: 'Start',
-                    time: _startTime,
+                  child: GestureDetector(
                     onTap: () => _pickTime(isStart: true),
+                    child: AbsorbPointer(
+                      child: TextField(
+                        decoration: InputDecoration(
+                          hintText: 'Start: ${_formatTime(_startTime)}',
+                          suffixIcon: const Icon(Icons.access_time_rounded, size: 18),
+                        ),
+                        style: AppTypography.body,
+                      ),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
-                  child: _TimePicker(
-                    label: 'End',
-                    time: _endTime,
+                  child: GestureDetector(
                     onTap: () => _pickTime(isStart: false),
+                    child: AbsorbPointer(
+                      child: TextField(
+                        decoration: InputDecoration(
+                          hintText: 'End: ${_formatTime(_endTime)}',
+                          suffixIcon: const Icon(Icons.access_time_rounded, size: 18),
+                        ),
+                        style: AppTypography.body,
+                      ),
+                    ),
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
 
             // Room
-            TextFormField(
+            TextField(
               controller: _roomController,
               decoration: const InputDecoration(
-                labelText: 'Room',
-                hintText: 'Ex: B2',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.room_rounded),
+                hintText: 'Room (e.g. B2)',
               ),
+              style: AppTypography.body,
             ),
             const SizedBox(height: 16),
 
             // Floor
-            TextFormField(
+            TextField(
               controller: _floorController,
               decoration: const InputDecoration(
-                labelText: 'Floor',
-                hintText: 'Ex: 2',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.layers_rounded),
+                hintText: 'Floor (e.g. 2)',
               ),
+              style: AppTypography.body,
             ),
             const SizedBox(height: 16),
 
             // Teacher
-            TextFormField(
+            TextField(
               controller: _teacherController,
               decoration: const InputDecoration(
-                labelText: 'Teacher',
-                hintText: 'e.g., Prof. Smith',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.person_rounded),
+                hintText: 'Teacher (optional)',
+              ),
+              style: AppTypography.body,
+            ),
+
+            const SizedBox(height: 32),
+            SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: FilledButton(
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+                onPressed: _save,
+                child: Text(
+                  _isEditing ? 'Save Changes' : 'Create Class',
+                  style: AppTypography.body,
+                ),
               ),
             ),
+            const SizedBox(height: 16),
           ],
         ),
       ),
-    );
-  }
-}
-
-class _TimePicker extends StatelessWidget {
-  final String label;
-  final TimeOfDay time;
-  final VoidCallback onTap;
-
-  const _TimePicker({
-    required this.label,
-    required this.time,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: AppTypography.caption),
-        const SizedBox(height: 8),
-        GestureDetector(
-          onTap: onTap,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-            decoration: BoxDecoration(
-              border: Border.all(color: AppColors.divider),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.access_time_rounded,
-                    size: 18, color: AppColors.textSecondary),
-                const SizedBox(width: 8),
-                Text(
-                  '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}',
-                  style: AppTypography.body,
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
     );
   }
 }
