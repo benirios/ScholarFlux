@@ -268,12 +268,21 @@ class _EditItemScreenState extends ConsumerState<EditItemScreen> {
             subjectAsync.when(
               data: (subject) {
                 final max = subject?.maxGrade.toStringAsFixed(0) ?? '20';
+                final canEditGrade = _dueDate == null || _dueDate!.isBefore(DateTime.now());
+                
                 return TextField(
                   controller: _gradeController,
-                  decoration:
-                      InputDecoration(hintText: 'Grade (0–$max)'),
+                  decoration: InputDecoration(
+                    hintText: canEditGrade 
+                        ? 'Grade (0–$max)'
+                        : 'Grade (available after due date)',
+                    suffixIcon: canEditGrade 
+                        ? null 
+                        : Icon(Icons.lock_outline, size: 18, color: AppColors.textTertiary),
+                  ),
                   style: AppTypography.body,
                   keyboardType: TextInputType.number,
+                  enabled: canEditGrade,
                 );
               },
               loading: () => TextField(

@@ -5,6 +5,7 @@ import '../../../core/theme/colors.dart';
 import '../../../core/theme/typography.dart';
 import '../../items/application/items_controller.dart';
 import '../../items/domain/item.dart';
+import '../../items/domain/item_type.dart';
 import '../application/subjects_controller.dart';
 import '../domain/subject.dart';
 
@@ -214,6 +215,9 @@ class _ItemTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isOverdue = item.isOverdue;
+    final isPending = item.status == ItemStatus.pending;
+    
     return GestureDetector(
       onTap: () => context.goNamed(
         'item-detail',
@@ -223,42 +227,68 @@ class _ItemTile extends StatelessWidget {
         },
       ),
       child: Container(
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
           color: AppColors.surfaceCardLight,
           borderRadius: BorderRadius.circular(12),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Row(
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                    child:
-                        Text(item.title, style: AppTypography.cardTitle)),
-                if (item.grade != null)
-                  Text('Nota-${item.grade!.toStringAsFixed(0)}',
-                      style: AppTypography.badge),
-              ],
+            // Status indicator
+            Icon(
+              item.isCompleted 
+                  ? Icons.check_circle
+                  : (isOverdue ? Icons.warning_amber_rounded : Icons.circle_outlined),
+              size: 20,
+              color: item.isCompleted
+                  ? AppColors.success
+                  : (isOverdue ? AppColors.error : AppColors.textTertiary),
             ),
-            if (item.domainId != null) ...[
-              const SizedBox(height: 6),
-              Builder(builder: (_) {
-                final domainScores = <String>[];
-                for (final d in subject.domains) {
-                  if (d.id == item.domainId && item.grade != null) {
-                    domainScores.add('${d.name}-${item.grade!.toStringAsFixed(1)}');
-                  }
-                }
-                if (domainScores.isEmpty) return const SizedBox.shrink();
-                return Text(
-                  'Domínios: ${domainScores.join("  ")}',
-                  style: AppTypography.caption
-                      .copyWith(color: AppColors.textSecondary),
-                );
-              }),
-            ],
+            const SizedBox(width: 12),
+            // Title and type
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(item.title, 
+                      style: AppTypography.body,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis),
+                  const SizedBox(height: 2),
+                  Row(
+                    children: [
+                      Text(
+                        item.type.label,
+                        style: AppTypography.caption
+                            .copyWith(color: AppColors.textSecondary),
+                      ),
+                      if (item.dueDate != null) ...[
+                        Text(' • ', style: AppTypography.caption.copyWith(color: AppColors.textTertiary)),
+                        Text(
+                          '${item.dueDate!.day}/${item.dueDate!.month}',
+                          style: AppTypography.caption.copyWith(
+                            color: isOverdue && isPending ? AppColors.error : AppColors.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            // Grade badge (if graded)
+            if (item.grade != null)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  item.grade!.toStringAsFixed(0),
+                  style: AppTypography.badge.copyWith(fontSize: 12),
+                ),
+              ),
           ],
         ),
       ),
