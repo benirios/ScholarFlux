@@ -1,13 +1,31 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/theme/colors.dart';
 import '../../../core/theme/typography.dart';
+import '../../items/application/items_controller.dart';
+import '../../items/domain/item.dart';
+import '../../items/domain/item_type.dart';
+import '../../subjects/application/subjects_controller.dart';
 
-class DashboardScreen extends StatelessWidget {
+class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final now = DateTime.now();
+    final upcomingAsync = ref.watch(upcomingItemsProvider);
+    final futureAsync = ref.watch(futureItemsProvider);
+    final subjectsAsync = ref.watch(subjectsProvider);
+
+    // Build a subject name lookup map
+    final subjectNames = <String, String>{};
+    subjectsAsync.whenData((subjects) {
+      for (final s in subjects) {
+        subjectNames[s.id] = s.name;
+      }
+    });
+
     return Scaffold(
       body: SafeArea(
         child: Padding(
@@ -26,7 +44,8 @@ class DashboardScreen extends StatelessWidget {
                 child: _WeekdayChips(selectedDay: now.weekday),
               ),
               const SliverToBoxAdapter(child: SizedBox(height: 20)),
-              // "Aulas" section
+
+              // "Aulas" section (placeholder)
               SliverToBoxAdapter(
                 child: Text('Aulas', style: AppTypography.sectionTitle),
               ),
@@ -38,35 +57,157 @@ class DashboardScreen extends StatelessWidget {
                 ),
               ),
               const SliverToBoxAdapter(child: SizedBox(height: 24)),
+
               // "Upcoming" section
               SliverToBoxAdapter(
                 child: Text('Upcoming', style: AppTypography.sectionTitle),
               ),
               const SliverToBoxAdapter(child: SizedBox(height: 8)),
-              SliverToBoxAdapter(
-                child: _PlaceholderCard(
-                  icon: Icons.assignment_outlined,
-                  message: 'No upcoming assignments',
-                ),
+              upcomingAsync.when(
+                loading: () => const SliverToBoxAdapter(
+                    child: Center(child: CircularProgressIndicator())),
+                error: (e, _) => SliverToBoxAdapter(
+                    child: Text('Error: $e',
+                        style: AppTypography.body
+                            .copyWith(color: AppColors.error))),
+                data: (items) => items.isEmpty
+                    ? SliverToBoxAdapter(
+                        child: _PlaceholderCard(
+                          icon: Icons.assignment_outlined,
+                          message: 'No upcoming assignments',
+                        ),
+                      )
+                    : SliverList(
+                        delegate: SliverChildBuilderDelegate(
+                          (context, index) => Padding(
+                            padding: const EdgeInsets.only(bottom: 8),
+                            child: _ItemCard(
+                              item: items[index],
+                              subjectName:
+                                  subjectNames[items[index].subjectId],
+                            ),
+                          ),
+                          childCount: items.length,
+                        ),
+                      ),
               ),
               const SliverToBoxAdapter(child: SizedBox(height: 24)),
+
               // "Trabalhos futuros" section
               SliverToBoxAdapter(
-                child:
-                    Text('Trabalhos futuros', style: AppTypography.sectionTitle),
+                child: Text('Trabalhos futuros',
+                    style: AppTypography.sectionTitle),
               ),
               const SliverToBoxAdapter(child: SizedBox(height: 8)),
-              SliverToBoxAdapter(
-                child: _PlaceholderCard(
-                  icon: Icons.event_note_rounded,
-                  message: 'No future work items',
-                ),
+              futureAsync.when(
+                loading: () => const SliverToBoxAdapter(
+                    child: Center(child: CircularProgressIndicator())),
+                error: (e, _) => SliverToBoxAdapter(
+                    child: Text('Error: $e',
+                        style: AppTypography.body
+                            .copyWith(color: AppColors.error))),
+                data: (items) => items.isEmpty
+                    ? SliverToBoxAdapter(
+                        child: _PlaceholderCard(
+                          icon: Icons.event_note_rounded,
+                          message: 'No future work items',
+                        ),
+                      )
+                    : SliverList(
+                        delegate: SliverChildBuilderDelegate(
+                          (context, index) => Padding(
+                            padding: const EdgeInsets.only(bottom: 8),
+                            child: _ItemCard(
+                              item: items[index],
+                              subjectName:
+                                  subjectNames[items[index].subjectId],
+                            ),
+                          ),
+                          childCount: items.length,
+                        ),
+                      ),
               ),
               const SliverToBoxAdapter(child: SizedBox(height: 32)),
             ],
           ),
         ),
       ),
+    );
+  }
+}
+
+class _ItemCard extends StatelessWidget {
+  final Item item;
+  final String? subjectName;
+
+  const _ItemCard({required this.item, this.subjectName});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => context.goNamed(
+        'item-detail',
+        pathParameters: {
+          'subjectId': item.subjectId,
+          'itemId': item.id,
+        },
+      ),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: AppColors.surfaceCard,
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(item.title, style: AppTypography.cardTitle),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      _TypeBadge(type: item.type),
+                      if (subjectName != null) ...[
+                        const SizedBox(width: 8),
+                        Text(subjectName!,
+                            style: AppTypography.caption
+                                .copyWith(color: AppColors.textSecondary)),
+                      ],
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            if (item.dueDate != null)
+              Text(
+                '${item.dueDate!.day}/${item.dueDate!.month}',
+                style: AppTypography.dateLabel,
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _TypeBadge extends StatelessWidget {
+  final ItemType type;
+  const _TypeBadge({required this.type});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        color: AppColors.chipDefault,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Text(type.label,
+          style: AppTypography.caption
+              .copyWith(color: AppColors.textSecondary, fontSize: 10)),
     );
   }
 }

@@ -29,6 +29,8 @@ class ItemsNotifier extends AsyncNotifier<List<Item>> {
     ItemPriority priority = ItemPriority.medium,
     String? origin,
     double? weight,
+    double? grade,
+    String? domainId,
   }) async {
     final now = DateTime.now();
     final item = Item(
@@ -41,6 +43,8 @@ class ItemsNotifier extends AsyncNotifier<List<Item>> {
       priority: priority,
       origin: origin,
       weight: weight,
+      grade: grade,
+      domainId: domainId,
       createdAt: now,
       updatedAt: now,
     );
@@ -100,4 +104,17 @@ final upcomingItemsProvider = FutureProvider<List<Item>>((ref) async {
 final overdueItemsProvider = FutureProvider<List<Item>>((ref) async {
   final items = await ref.watch(itemsProvider.future);
   return items.where((item) => item.isOverdue).toList();
+});
+
+/// Future items (due beyond 7 days, not completed).
+final futureItemsProvider = FutureProvider<List<Item>>((ref) async {
+  final items = await ref.watch(itemsProvider.future);
+  final now = DateTime.now();
+  return items
+      .where((item) =>
+          item.status == ItemStatus.pending &&
+          item.dueDate != null &&
+          item.dueDate!.isAfter(now) &&
+          item.dueDate!.difference(now).inDays > 7)
+      .toList();
 });
