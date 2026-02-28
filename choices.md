@@ -75,3 +75,28 @@
 
 **Q: Should tapping an item card on the dashboard navigate to its detail screen?**
 → **Yes** — tapping navigates to the item detail screen.
+
+---
+
+## Day 6 — Calendar & Future-Work View
+
+**Q: Should tapping a day in the calendar filter the items list below to show only items due on that date?**
+→ **Yes** — tapping a day shows items due on that date below the grid.
+
+**Q: How should days with items be highlighted on the calendar grid?**
+→ **Blue circle for today, blue text for days with items** (matches reference).
+
+**Q: Should the month chips at the top be interactive?**
+→ **Yes** — tapping a month chip switches the calendar to that month.
+
+**Q: Should the "Trabalhos futuros" section show all future items or filter by selected month?**
+→ **Filter future items to the selected month only**.
+
+**Q: Should items in the "Trabalhos futuros" list be tappable?**
+→ **No** — items in the calendar are display-only.
+
+**Q: Should overdue item dates be shown in red?**
+→ **Yes** — red text for overdue items, white for normal.
+
+**Q: What info should each item in the "Trabalhos futuros" list show?**
+→ **Item title, subject name, and due date** (dd/MM/yy).

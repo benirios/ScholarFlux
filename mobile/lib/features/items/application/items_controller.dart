@@ -120,3 +120,31 @@ final futureItemsProvider = FutureProvider<List<Item>>((ref) async {
           item.dueDate!.difference(now).inDays > 7)
       .toList();
 });
+
+/// Items due in a specific month/year.
+final itemsByMonthProvider =
+    FutureProvider.family<List<Item>, ({int year, int month})>(
+        (ref, params) async {
+  final items = await ref.watch(itemsProvider.future);
+  return items
+      .where((item) =>
+          item.dueDate != null &&
+          item.dueDate!.year == params.year &&
+          item.dueDate!.month == params.month)
+      .toList()
+    ..sort((a, b) => a.dueDate!.compareTo(b.dueDate!));
+});
+
+/// Items due on a specific date.
+final itemsByDateProvider =
+    FutureProvider.family<List<Item>, DateTime>((ref, date) async {
+  final items = await ref.watch(itemsProvider.future);
+  return items
+      .where((item) =>
+          item.dueDate != null &&
+          item.dueDate!.year == date.year &&
+          item.dueDate!.month == date.month &&
+          item.dueDate!.day == date.day)
+      .toList()
+    ..sort((a, b) => a.dueDate!.compareTo(b.dueDate!));
+});
