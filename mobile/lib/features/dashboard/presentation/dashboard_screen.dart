@@ -181,11 +181,31 @@ class _ItemCard extends StatelessWidget {
                 ],
               ),
             ),
-            if (item.dueDate != null)
-              Text(
-                '${item.dueDate!.day}/${item.dueDate!.month}',
-                style: AppTypography.dateLabel,
-              ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (item.dueDate != null)
+                  Text(
+                    '${item.dueDate!.day}/${item.dueDate!.month}',
+                    style: AppTypography.dateLabel,
+                  ),
+                if (item.grade != null) ...[
+                  const SizedBox(height: 4),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      item.grade!.toStringAsFixed(0),
+                      style: AppTypography.badge.copyWith(fontSize: 11),
+                    ),
+                  ),
+                ],
+              ],
+            ),
           ],
         ),
       ),
