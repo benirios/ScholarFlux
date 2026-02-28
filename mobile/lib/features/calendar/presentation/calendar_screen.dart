@@ -15,16 +15,16 @@ class CalendarScreen extends ConsumerStatefulWidget {
 
 class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   static const _monthLabels = [
-    'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun',
-    'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez',
+    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
   ];
-  static const _weekdayLabels = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
+  static const _weekdayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   static const _months = [
-    '', 'janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho',
-    'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro',
+    '', 'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December',
   ];
   static const _weekdays = [
-    '', 'segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado', 'domingo',
+    '', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday',
   ];
 
   late int _selectedMonth;
@@ -76,7 +76,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                       RichText(
                         text: TextSpan(children: [
                           TextSpan(
-                            text: '${now.day} de ${_months[now.month]}, ',
+                            text: '${_months[now.month]} ${now.day}, ',
                             style: AppTypography.headerLarge,
                           ),
                           TextSpan(
@@ -187,7 +187,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                 ..._buildSelectedDaySection(now, subjectNames),
               // Trabalhos futuros
               SliverToBoxAdapter(
-                child: Text('Trabalhos futuros',
+                child: Text('Future work',
                     style: AppTypography.sectionTitle),
               ),
               const SliverToBoxAdapter(child: SizedBox(height: 12)),
@@ -211,7 +211,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         child: Padding(
           padding: const EdgeInsets.only(bottom: 12),
           child: Text(
-            '$_selectedDay de ${_months[_selectedMonth]}',
+            '${_months[_selectedMonth]} $_selectedDay',
             style: AppTypography.sectionTitle,
           ),
         ),
@@ -223,7 +223,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
               child: Padding(
                 padding: const EdgeInsets.only(bottom: 24),
                 child: Text(
-                  'Sem trabalhos neste dia',
+                  'No items on this day',
                   style: AppTypography.cardSubtitle,
                 ),
               ),
@@ -276,7 +276,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                   Icon(Icons.event_note_rounded,
                       size: 36, color: AppColors.textTertiary),
                   const SizedBox(height: 8),
-                  Text('Sem trabalhos este mês',
+                  Text('No items this month',
                       style: AppTypography.cardSubtitle),
                 ],
               ),

@@ -84,11 +84,11 @@ class ClassEntry {
   int compareTo(ClassEntry other) => startTime.compareTo(other.startTime);
 
   static const weekdayLabels = [
-    '', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo',
+    '', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday',
   ];
 
   static const weekdayShort = [
-    '', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom',
+    '', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun',
   ];
 
   String get weekdayLabel => weekdayLabels[dayOfWeek];
@@ -99,8 +99,8 @@ class ClassEntry {
   /// Location string combining room and floor.
   String? get location {
     final parts = <String>[];
-    if (room != null && room!.isNotEmpty) parts.add('Sala $room');
-    if (floor != null && floor!.isNotEmpty) parts.add('Piso $floor');
+    if (room != null && room!.isNotEmpty) parts.add('Room $room');
+    if (floor != null && floor!.isNotEmpty) parts.add('Floor $floor');
     return parts.isEmpty ? null : parts.join(', ');
   }
 }

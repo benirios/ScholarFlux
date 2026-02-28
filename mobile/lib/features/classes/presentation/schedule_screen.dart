@@ -31,14 +31,14 @@ class ScheduleScreen extends ConsumerWidget {
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.only(top: 16, bottom: 16),
-                  child: Text('Horário', style: AppTypography.headerLarge),
+                  child: Text('Schedule', style: AppTypography.headerLarge),
                 ),
               ),
               classesAsync.when(
                 loading: () => const SliverToBoxAdapter(
                     child: Center(child: CircularProgressIndicator())),
                 error: (e, _) => SliverToBoxAdapter(
-                    child: Text('Erro: $e',
+                    child: Text('Error: $e',
                         style: AppTypography.body
                             .copyWith(color: AppColors.error))),
                 data: (classes) {
@@ -56,10 +56,10 @@ class ScheduleScreen extends ConsumerWidget {
                             Icon(Icons.schedule_rounded,
                                 size: 48, color: AppColors.textTertiary),
                             const SizedBox(height: 12),
-                            Text('Sem aulas registadas',
+                            Text('No classes registered',
                                 style: AppTypography.cardSubtitle),
                             const SizedBox(height: 4),
-                            Text('Toque + para adicionar',
+                            Text('Tap + to add one',
                                 style: AppTypography.caption
                                     .copyWith(color: AppColors.textTertiary)),
                           ],
@@ -117,8 +117,7 @@ class ScheduleScreen extends ConsumerWidget {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => context.goNamed('new-class'),
-        backgroundColor: AppColors.primary,
-        child: const Icon(Icons.add, color: Colors.white),
+        child: const Icon(Icons.add_rounded),
       ),
     );
   }
@@ -128,20 +127,22 @@ class ScheduleScreen extends ConsumerWidget {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Eliminar aula?'),
+        backgroundColor: AppColors.surfaceCard,
+        title: Text('Delete class?', style: AppTypography.cardTitle),
         content: Text(
-            'Tens a certeza que queres eliminar esta aula de ${entry.weekdayLabel}?'),
+            'Are you sure you want to delete this ${entry.weekdayLabel} class?',
+            style: AppTypography.body),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancelar'),
+            child: const Text('Cancel'),
           ),
           TextButton(
             onPressed: () {
               ref.read(classesProvider.notifier).deleteClass(entry.id);
               Navigator.pop(ctx);
             },
-            child: Text('Eliminar',
+            child: Text('Delete',
                 style: TextStyle(color: AppColors.error)),
           ),
         ],

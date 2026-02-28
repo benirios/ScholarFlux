@@ -84,8 +84,8 @@ class ItemDetailScreen extends ConsumerWidget {
                                   style: AppTypography.cardTitle)),
                           Text(
                             item.grade != null
-                                ? 'Nota-${item.grade!.toStringAsFixed(0)}'
-                                : 'Nota-–',
+                                ? 'Grade ${item.grade!.toStringAsFixed(0)}'
+                                : 'Grade –',
                             style: AppTypography.badge,
                           ),
                         ],

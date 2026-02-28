@@ -178,13 +178,13 @@ class _SubjectHeaderCard extends StatelessWidget {
                   final avg = subject.averageGrade(items);
                   final label =
                       avg != null ? avg.toStringAsFixed(0) : '–';
-                  return Text('Média-$label',
+                  return Text('Avg $label',
                       style: AppTypography.badge);
                 },
                 loading: () =>
-                    Text('Média-…', style: AppTypography.badge),
+                    Text('Avg …', style: AppTypography.badge),
                 error: (_, _) =>
-                    Text('Média-?', style: AppTypography.badge),
+                    Text('Avg ?', style: AppTypography.badge),
               ),
             ],
           ),

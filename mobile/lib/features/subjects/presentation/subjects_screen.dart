@@ -113,14 +113,14 @@ class _SubjectCard extends ConsumerWidget {
                 ),
                 itemsAsync.when(
                   data: (items) => _MediaBadge(subject: subject, items: items),
-                  loading: () => Text('Média-…', style: AppTypography.badge),
-                  error: (_, _) => Text('Média-?', style: AppTypography.badge),
+                  loading: () => Text('Avg …', style: AppTypography.badge),
+                  error: (_, _) => Text('Avg ?', style: AppTypography.badge),
                 ),
               ],
             ),
             if (subject.domains.isNotEmpty) ...[
               const SizedBox(height: 8),
-              Text('Domínios:', style: AppTypography.caption),
+              Text('Domains:', style: AppTypography.caption),
               const SizedBox(height: 4),
               itemsAsync.when(
                 data: (items) => _DomainScoresRow(
@@ -145,7 +145,7 @@ class _MediaBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final avg = subject.averageGrade(items);
     final label = avg != null ? avg.toStringAsFixed(0) : '–';
-    return Text('Média-$label', style: AppTypography.badge);
+    return Text('Avg $label', style: AppTypography.badge);
   }
 }
 
@@ -172,11 +172,11 @@ class _DomainScoresRow extends StatelessWidget {
 
 class _SubjectsHeader extends StatelessWidget {
   static const _months = [
-    '', 'janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho',
-    'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro',
+    '', 'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December',
   ];
   static const _weekdays = [
-    '', 'segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado', 'domingo',
+    '', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday',
   ];
 
   @override
@@ -186,7 +186,7 @@ class _SubjectsHeader extends StatelessWidget {
       text: TextSpan(
         children: [
           TextSpan(
-            text: '${now.day} de ${_months[now.month]}, ',
+            text: '${_months[now.month]} ${now.day}, ',
             style: AppTypography.headerLarge,
           ),
           TextSpan(

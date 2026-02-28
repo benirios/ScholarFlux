@@ -39,7 +39,7 @@ class NavShell extends StatelessWidget {
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.schedule_rounded),
-              label: 'Horário',
+              label: 'Schedule',
             ),
           ],
         ),

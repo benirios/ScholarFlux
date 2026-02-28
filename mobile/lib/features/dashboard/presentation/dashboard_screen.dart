@@ -49,7 +49,7 @@ class DashboardScreen extends ConsumerWidget {
 
               // "Aulas" section (today's classes)
               SliverToBoxAdapter(
-                child: Text('Aulas', style: AppTypography.sectionTitle),
+                child: Text('Classes', style: AppTypography.sectionTitle),
               ),
               const SliverToBoxAdapter(child: SizedBox(height: 8)),
               todayClassesAsync.when(
@@ -63,7 +63,7 @@ class DashboardScreen extends ConsumerWidget {
                     ? SliverToBoxAdapter(
                         child: _PlaceholderCard(
                           icon: Icons.school_rounded,
-                          message: 'Sem aulas hoje',
+                          message: 'No classes today',
                         ),
                       )
                     : SliverList(
@@ -172,7 +172,7 @@ class DashboardScreen extends ConsumerWidget {
 
               // "Trabalhos futuros" section
               SliverToBoxAdapter(
-                child: Text('Trabalhos futuros',
+                child: Text('Future work',
                     style: AppTypography.sectionTitle),
               ),
               const SliverToBoxAdapter(child: SizedBox(height: 8)),
@@ -314,11 +314,11 @@ class _DateHeader extends StatelessWidget {
   const _DateHeader({required this.date});
 
   static const _weekdays = [
-    '', 'segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado', 'domingo',
+    '', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday',
   ];
   static const _months = [
-    '', 'janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho',
-    'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro',
+    '', 'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December',
   ];
 
   @override
@@ -327,7 +327,7 @@ class _DateHeader extends StatelessWidget {
       text: TextSpan(
         children: [
           TextSpan(
-            text: '${date.day} de ${_months[date.month]}, ',
+            text: '${_months[date.month]} ${date.day}, ',
             style: AppTypography.headerLarge,
           ),
           TextSpan(
@@ -344,7 +344,7 @@ class _WeekdayChips extends StatelessWidget {
   final int selectedDay;
   const _WeekdayChips({required this.selectedDay});
 
-  static const _labels = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex'];
+  static const _labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
 
   @override
   Widget build(BuildContext context) {

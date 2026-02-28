@@ -82,7 +82,7 @@ class _EditClassScreenState extends ConsumerState<EditClassScreen> {
     if (!_formKey.currentState!.validate()) return;
     if (_subjectId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Seleciona uma disciplina')),
+        const SnackBar(content: Text('Select a subject')),
       );
       return;
     }
@@ -93,7 +93,7 @@ class _EditClassScreenState extends ConsumerState<EditClassScreen> {
     if (startStr.compareTo(endStr) >= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-            content: Text('A hora de início deve ser antes da hora de fim')),
+            content: Text('Start time must be before end time')),
       );
       return;
     }
@@ -153,11 +153,11 @@ class _EditClassScreenState extends ConsumerState<EditClassScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(_isEditing ? 'Editar aula' : 'Nova aula'),
+        title: Text(_isEditing ? 'Edit Class' : 'New Class'),
         actions: [
           TextButton(
             onPressed: _save,
-            child: Text('Guardar',
+            child: Text('Save',
                 style: TextStyle(color: AppColors.primary, fontSize: 16)),
           ),
         ],
@@ -168,21 +168,21 @@ class _EditClassScreenState extends ConsumerState<EditClassScreen> {
           padding: const EdgeInsets.all(16),
           children: [
             // Subject picker
-            Text('Disciplina', style: AppTypography.caption),
+            Text('Subject', style: AppTypography.caption),
             const SizedBox(height: 8),
             subjectsAsync.when(
               loading: () => const CircularProgressIndicator(),
-              error: (e, _) => Text('Erro: $e'),
+              error: (e, _) => Text('Error: $e'),
               data: (subjects) {
                 if (subjects.isEmpty) {
-                  return Text('Cria uma disciplina primeiro',
+                  return Text('Create a subject first',
                       style: AppTypography.body
                           .copyWith(color: AppColors.textSecondary));
                 }
                 return DropdownButtonFormField<String>(
                   initialValue: _subjectId,
                   decoration: const InputDecoration(
-                    hintText: 'Selecionar disciplina',
+                    hintText: 'Select subject',
                     border: OutlineInputBorder(),
                   ),
                   items: subjects
@@ -193,14 +193,14 @@ class _EditClassScreenState extends ConsumerState<EditClassScreen> {
                       .toList(),
                   onChanged: (v) => setState(() => _subjectId = v),
                   validator: (v) =>
-                      v == null ? 'Seleciona uma disciplina' : null,
+                      v == null ? 'Select a subject' : null,
                 );
               },
             ),
             const SizedBox(height: 20),
 
             // Day of week picker
-            Text('Dia da semana', style: AppTypography.caption),
+            Text('Day of week', style: AppTypography.caption),
             const SizedBox(height: 8),
             Wrap(
               spacing: 8,
@@ -231,7 +231,7 @@ class _EditClassScreenState extends ConsumerState<EditClassScreen> {
               children: [
                 Expanded(
                   child: _TimePicker(
-                    label: 'Início',
+                    label: 'Start',
                     time: _startTime,
                     onTap: () => _pickTime(isStart: true),
                   ),
@@ -239,7 +239,7 @@ class _EditClassScreenState extends ConsumerState<EditClassScreen> {
                 const SizedBox(width: 16),
                 Expanded(
                   child: _TimePicker(
-                    label: 'Fim',
+                    label: 'End',
                     time: _endTime,
                     onTap: () => _pickTime(isStart: false),
                   ),
@@ -252,7 +252,7 @@ class _EditClassScreenState extends ConsumerState<EditClassScreen> {
             TextFormField(
               controller: _roomController,
               decoration: const InputDecoration(
-                labelText: 'Sala',
+                labelText: 'Room',
                 hintText: 'Ex: B2',
                 border: OutlineInputBorder(),
                 prefixIcon: Icon(Icons.room_rounded),
@@ -264,7 +264,7 @@ class _EditClassScreenState extends ConsumerState<EditClassScreen> {
             TextFormField(
               controller: _floorController,
               decoration: const InputDecoration(
-                labelText: 'Piso',
+                labelText: 'Floor',
                 hintText: 'Ex: 2',
                 border: OutlineInputBorder(),
                 prefixIcon: Icon(Icons.layers_rounded),
@@ -276,8 +276,8 @@ class _EditClassScreenState extends ConsumerState<EditClassScreen> {
             TextFormField(
               controller: _teacherController,
               decoration: const InputDecoration(
-                labelText: 'Professor(a)',
-                hintText: 'Ex: Prof. Silva',
+                labelText: 'Teacher',
+                hintText: 'e.g., Prof. Smith',
                 border: OutlineInputBorder(),
                 prefixIcon: Icon(Icons.person_rounded),
               ),
