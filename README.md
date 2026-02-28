@@ -35,12 +35,3 @@ Developer notes
 - Domain models live under `mobile/lib/features/*/domain` and repositories are in `mobile/lib/data/repositories`.
 - To run static analysis: `dart analyze` from the `mobile/` directory.
 
-Contributing
-
-PRs welcome — keep changes small and focused. For major features, open an issue first to discuss design/UX.
-
-License
-
-MIT — feel free to remix, extend, and ship.
-
-Made with ❤️ and a lot of coffee.
