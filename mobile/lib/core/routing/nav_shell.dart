@@ -37,6 +37,10 @@ class NavShell extends StatelessWidget {
               icon: Icon(Icons.calendar_month_rounded),
               label: 'Calendar',
             ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.schedule_rounded),
+              label: 'Horário',
+            ),
           ],
         ),
       ),

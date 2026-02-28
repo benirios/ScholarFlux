@@ -8,6 +8,8 @@ import '../../features/subjects/presentation/edit_subject_screen.dart';
 import '../../features/items/presentation/edit_item_screen.dart';
 import '../../features/items/presentation/item_detail_screen.dart';
 import '../../features/calendar/presentation/calendar_screen.dart';
+import '../../features/classes/presentation/schedule_screen.dart';
+import '../../features/classes/presentation/edit_class_screen.dart';
 
 final goRouter = GoRouter(
   initialLocation: '/dashboard',
@@ -104,6 +106,31 @@ final goRouter = GoRouter(
               path: '/calendar',
               name: 'calendar',
               builder: (context, state) => const CalendarScreen(),
+            ),
+          ],
+        ),
+        // Tab 3 — Schedule (Horário)
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: '/schedule',
+              name: 'schedule',
+              builder: (context, state) => const ScheduleScreen(),
+              routes: [
+                GoRoute(
+                  path: 'new',
+                  name: 'new-class',
+                  builder: (context, state) => const EditClassScreen(),
+                ),
+                GoRoute(
+                  path: ':classId/edit',
+                  name: 'edit-class',
+                  builder: (context, state) {
+                    final classId = state.pathParameters['classId']!;
+                    return EditClassScreen(classId: classId);
+                  },
+                ),
+              ],
             ),
           ],
         ),

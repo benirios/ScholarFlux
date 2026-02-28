@@ -100,3 +100,37 @@
 
 **Q: What info should each item in the "Trabalhos futuros" list show?**
 → **Item title, subject name, and due date** (dd/MM/yy).
+
+---
+
+## Classes (Aulas) Feature
+
+**Q: What does a "class" represent?**
+→ **Recurring weekly schedule** (e.g., Math — Monday 10:00–11:30).
+
+**Q: Should each class be linked to a subject?**
+→ **Yes** — a class must be linked to an existing subject.
+
+**Q: What time fields should a class entry have?**
+→ **Day of week + start time + end time**.
+
+**Q: What location info should a class entry have?**
+→ **Room + floor**.
+
+**Q: Should there be a dedicated schedule screen?**
+→ **Yes** — it should appear in the dashboard and a dedicated screen.
+
+**Q: Where should today's classes appear on the dashboard?**
+→ **Replace the 'Aulas' placeholder section** with real class data.
+
+**Q: How should the user access the schedule screen?**
+→ **A new tab in the bottom navigation bar**.
+
+**Q: What layout for the schedule screen?**
+→ **List grouped by weekday** (Monday → Friday, each day shows classes sorted by time).
+
+**Q: Should a class include a teacher name?**
+→ **Yes** — optional teacher name field.
+
+**Q: Form style for creating/editing classes?**
+→ **Full-screen form** (matches existing pattern).

@@ -7,6 +7,7 @@ import '../../items/application/items_controller.dart';
 import '../../items/domain/item.dart';
 import '../../items/domain/item_type.dart';
 import '../../subjects/application/subjects_controller.dart';
+import '../../classes/application/classes_controller.dart';
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
@@ -17,6 +18,7 @@ class DashboardScreen extends ConsumerWidget {
     final upcomingAsync = ref.watch(upcomingItemsProvider);
     final futureAsync = ref.watch(futureItemsProvider);
     final subjectsAsync = ref.watch(subjectsProvider);
+    final todayClassesAsync = ref.watch(todayClassesProvider);
 
     // Build a subject name lookup map
     final subjectNames = <String, String>{};
@@ -45,16 +47,91 @@ class DashboardScreen extends ConsumerWidget {
               ),
               const SliverToBoxAdapter(child: SizedBox(height: 20)),
 
-              // "Aulas" section (placeholder)
+              // "Aulas" section (today's classes)
               SliverToBoxAdapter(
                 child: Text('Aulas', style: AppTypography.sectionTitle),
               ),
               const SliverToBoxAdapter(child: SizedBox(height: 8)),
-              SliverToBoxAdapter(
-                child: _PlaceholderCard(
-                  icon: Icons.school_rounded,
-                  message: 'No classes scheduled',
-                ),
+              todayClassesAsync.when(
+                loading: () => const SliverToBoxAdapter(
+                    child: Center(child: CircularProgressIndicator())),
+                error: (e, _) => SliverToBoxAdapter(
+                    child: Text('Error: $e',
+                        style: AppTypography.body
+                            .copyWith(color: AppColors.error))),
+                data: (classes) => classes.isEmpty
+                    ? SliverToBoxAdapter(
+                        child: _PlaceholderCard(
+                          icon: Icons.school_rounded,
+                          message: 'Sem aulas hoje',
+                        ),
+                      )
+                    : SliverList(
+                        delegate: SliverChildBuilderDelegate(
+                          (context, index) {
+                            final c = classes[index];
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 8),
+                              child: Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.all(14),
+                                decoration: BoxDecoration(
+                                  color: AppColors.surfaceCard,
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(c.startTime,
+                                            style: AppTypography.cardTitle
+                                                .copyWith(fontSize: 14)),
+                                        Text(c.endTime,
+                                            style: AppTypography.cardSubtitle
+                                                .copyWith(fontSize: 11)),
+                                      ],
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Container(
+                                      width: 3,
+                                      height: 30,
+                                      decoration: BoxDecoration(
+                                        color: AppColors.primary,
+                                        borderRadius:
+                                            BorderRadius.circular(2),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            subjectNames[c.subjectId] ?? '',
+                                            style: AppTypography.cardTitle,
+                                          ),
+                                          if (c.location != null)
+                                            Text(
+                                              c.location!,
+                                              style: AppTypography.caption
+                                                  .copyWith(
+                                                      color: AppColors
+                                                          .textSecondary),
+                                            ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                          childCount: classes.length,
+                        ),
+                      ),
               ),
               const SliverToBoxAdapter(child: SizedBox(height: 24)),
 
