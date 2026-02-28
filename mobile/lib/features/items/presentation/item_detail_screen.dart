@@ -115,48 +115,6 @@ class ItemDetailScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 24),
 
-                // Toggle complete
-                GestureDetector(
-                  onTap: () =>
-                      ref.read(itemsProvider.notifier).toggleComplete(item),
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 12),
-                    decoration: BoxDecoration(
-                      color: item.isCompleted
-                          ? AppColors.success.withValues(alpha: 0.15)
-                          : AppColors.surfaceCard,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          item.isCompleted
-                              ? Icons.check_circle
-                              : Icons.circle_outlined,
-                          color: item.isCompleted
-                              ? AppColors.success
-                              : AppColors.textSecondary,
-                          size: 22,
-                        ),
-                        const SizedBox(width: 12),
-                        Text(
-                          item.isCompleted
-                              ? 'Completed'
-                              : 'Mark as complete',
-                          style: AppTypography.body.copyWith(
-                            color: item.isCompleted
-                                ? AppColors.success
-                                : AppColors.textPrimary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 24),
-
                 Text('Details', style: AppTypography.sectionTitle),
                 const SizedBox(height: 12),
                 _DetailRow(label: 'Type', value: item.type.label),
