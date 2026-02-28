@@ -218,6 +218,13 @@ class _ItemTile extends StatelessWidget {
     final isOverdue = item.isOverdue;
     final isPending = item.status == ItemStatus.pending;
     
+    // Find domain name
+    String? domainName;
+    if (item.domainId != null) {
+      final domain = subject.domains.where((d) => d.id == item.domainId).firstOrNull;
+      domainName = domain?.name;
+    }
+    
     return GestureDetector(
       onTap: () => context.goNamed(
         'item-detail',
@@ -276,19 +283,48 @@ class _ItemTile extends StatelessWidget {
                 ],
               ),
             ),
-            // Grade badge (if graded)
-            if (item.grade != null)
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  item.grade!.toStringAsFixed(0),
-                  style: AppTypography.badge.copyWith(fontSize: 12),
-                ),
-              ),
+            // Right side info column
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Grade badge (if graded)
+                if (item.grade != null)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      item.grade!.toStringAsFixed(0),
+                      style: AppTypography.badge.copyWith(fontSize: 12),
+                    ),
+                  ),
+                // Domain info
+                if (domainName != null) ...[
+                  if (item.grade != null) const SizedBox(height: 4),
+                  Text(
+                    domainName,
+                    style: AppTypography.caption.copyWith(
+                      color: AppColors.textSecondary,
+                      fontSize: 11,
+                    ),
+                  ),
+                ],
+                // Weight info for tests
+                if (item.type == ItemType.test && item.weight != null) ...[
+                  if (domainName != null || item.grade != null) const SizedBox(height: 2),
+                  Text(
+                    '${item.weight!.toStringAsFixed(0)}%',
+                    style: AppTypography.caption.copyWith(
+                      color: AppColors.textTertiary,
+                      fontSize: 10,
+                    ),
+                  ),
+                ],
+              ],
+            ),
           ],
         ),
       ),
