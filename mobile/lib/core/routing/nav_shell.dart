@@ -15,9 +15,9 @@ class NavShell extends StatelessWidget {
       body: navigationShell,
       extendBody: true,
       bottomNavigationBar: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(20),
           child: BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
             child: Container(
@@ -30,7 +30,7 @@ class NavShell extends StatelessWidget {
                     Colors.white.withValues(alpha: 0.05),
                   ],
                 ),
-                borderRadius: BorderRadius.circular(24),
+                borderRadius: BorderRadius.circular(20),
                 border: Border.all(
                   color: AppColors.glassBorder,
                   width: 0.5,
@@ -55,23 +55,36 @@ class NavShell extends StatelessWidget {
                       type: BottomNavigationBarType.fixed,
                       selectedItemColor: AppColors.primary,
                       unselectedItemColor: AppColors.textTertiary,
-                      selectedFontSize: 11,
-                      unselectedFontSize: 11,
+                      selectedFontSize: 10,
+                      unselectedFontSize: 10,
+                      iconSize: 22,
                       items: const [
                         BottomNavigationBarItem(
-                          icon: Icon(Icons.dashboard_rounded),
+                          icon: Padding(
+                            padding: EdgeInsets.only(bottom: 2),
+                            child: Icon(Icons.dashboard_rounded),
+                          ),
                           label: 'Dashboard',
                         ),
                         BottomNavigationBarItem(
-                          icon: Icon(Icons.book_rounded),
+                          icon: Padding(
+                            padding: EdgeInsets.only(bottom: 2),
+                            child: Icon(Icons.book_rounded),
+                          ),
                           label: 'Subjects',
                         ),
                         BottomNavigationBarItem(
-                          icon: Icon(Icons.calendar_month_rounded),
+                          icon: Padding(
+                            padding: EdgeInsets.only(bottom: 2),
+                            child: Icon(Icons.calendar_month_rounded),
+                          ),
                           label: 'Calendar',
                         ),
                         BottomNavigationBarItem(
-                          icon: Icon(Icons.schedule_rounded),
+                          icon: Padding(
+                            padding: EdgeInsets.only(bottom: 2),
+                            child: Icon(Icons.schedule_rounded),
+                          ),
                           label: 'Schedule',
                         ),
                       ],

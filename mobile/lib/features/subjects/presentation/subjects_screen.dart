@@ -82,9 +82,12 @@ class SubjectsScreen extends ConsumerWidget {
           ),
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => context.goNamed('new-subject'),
-        child: const Icon(Icons.add_rounded),
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 72),
+        child: FloatingActionButton(
+          onPressed: () => context.goNamed('new-subject'),
+          child: const Icon(Icons.add_rounded),
+        ),
       ),
     );
   }
