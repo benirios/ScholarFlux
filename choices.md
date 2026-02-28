@@ -47,3 +47,31 @@
 
 **Q: Grading scale?**
 → **User-configurable per subject** (e.g. 0–20, 0–100, 0–10).
+
+---
+
+## Day 5 — Item CRUD
+
+**Q: Should the edit item form include an "Origin" field (who assigned it)?**
+→ **Yes** — show origin field on the edit item form.
+
+**Q: When should the "weight" field (% contribution to final grade) appear?**
+→ **Show weight field only when type is Test** — hidden for assignments and homework.
+
+**Q: Should the grade field be editable on the create/edit item form?**
+→ **Yes** — allow entering grade when creating/editing an item.
+
+**Q: How should the user select which domain an item belongs to?**
+→ **Dropdown picker** from the subject's domains.
+
+**Q: How should users mark an item as complete?**
+→ **Toggle button/checkbox on item detail screen**.
+
+**Q: Delete UX for items?**
+→ **Confirmation dialog** (same pattern as subjects).
+
+**Q: Should the dashboard be wired to show real upcoming/overdue items?**
+→ **Yes** — wire Upcoming and Trabalhos futuros sections with real item data.
+
+**Q: Should tapping an item card on the dashboard navigate to its detail screen?**
+→ **Yes** — tapping navigates to the item detail screen.
