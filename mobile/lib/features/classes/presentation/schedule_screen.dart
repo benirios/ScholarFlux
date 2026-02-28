@@ -118,10 +118,10 @@ class ScheduleScreen extends ConsumerWidget {
         ),
       ),
       floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 64),
-        child: FloatingActionButton.small(
+        padding: const EdgeInsets.only(bottom: 64, right: 4),
+        child: FloatingActionButton(
           onPressed: () => context.goNamed('new-class'),
-          child: const Icon(Icons.add_rounded, size: 20),
+          child: const Icon(Icons.add_rounded),
         ),
       ),
     );
