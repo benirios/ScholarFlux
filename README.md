@@ -279,7 +279,7 @@ For a deep-dive into every function, class, provider, and widget — including c
 - [x] Onboarding flow with rich glass visuals
 - [ ] Cloud sync (Firebase / Supabase)
 - [ ] Push notifications for due dates
-- [ ] Grade trend charts and analytics
+- [x] Grade trend charts and analytics
 - [ ] Subject color coding
 - [ ] Export/import data
 - [ ] Widget for home screen (iOS/Android)
