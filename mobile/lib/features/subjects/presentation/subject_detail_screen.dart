@@ -59,68 +59,71 @@ class SubjectDetailScreen extends ConsumerWidget {
               ),
             ],
           ),
-          body: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 8),
-                // Subject header card
-                _SubjectHeaderCard(
-                    subject: subject, itemsAsync: itemsAsync),
-                const SizedBox(height: 24),
-                Text('Items', style: AppTypography.sectionTitle),
-                const SizedBox(height: 12),
-                Expanded(
-                  child: itemsAsync.when(
-                    loading: () =>
-                        const Center(child: CircularProgressIndicator()),
-                    error: (e, _) => Center(
-                        child: Text('Error: $e',
-                            style: AppTypography.body
-                                .copyWith(color: AppColors.error))),
-                    data: (items) => items.isEmpty
-                        ? Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.assignment_outlined,
-                                    size: 48,
-                                    color: AppColors.textTertiary),
-                                const SizedBox(height: 12),
-                                Text('No items yet',
-                                    style: AppTypography.cardSubtitle),
-                              ],
-                            ),
-                          )
-                        : ListView.separated(
-                            itemCount: items.length,
-                            separatorBuilder: (_, _) =>
-                                const SizedBox(height: 8),
-                            itemBuilder: (context, index) =>
-                                AnimatedListItem(
-                                  index: index,
-                                  child: _ItemTile(
-                                      item: items[index],
-                                      subject: subject),
+          body: Stack(
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 8),
+                    _SubjectHeaderCard(
+                        subject: subject, itemsAsync: itemsAsync),
+                    const SizedBox(height: 24),
+                    Text('Items', style: AppTypography.sectionTitle),
+                    const SizedBox(height: 12),
+                    Expanded(
+                      child: itemsAsync.when(
+                        loading: () =>
+                            const Center(child: CircularProgressIndicator()),
+                        error: (e, _) => Center(
+                            child: Text('Error: $e',
+                                style: AppTypography.body
+                                    .copyWith(color: AppColors.error))),
+                        data: (items) => items.isEmpty
+                            ? Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.assignment_outlined,
+                                        size: 48,
+                                        color: AppColors.textTertiary),
+                                    const SizedBox(height: 12),
+                                    Text('No items yet',
+                                        style: AppTypography.cardSubtitle),
+                                  ],
                                 ),
-                          ),
-                  ),
+                              )
+                            : ListView.separated(
+                                itemCount: items.length,
+                                separatorBuilder: (_, _) =>
+                                    const SizedBox(height: 8),
+                                itemBuilder: (context, index) =>
+                                    AnimatedListItem(
+                                      index: index,
+                                      child: _ItemTile(
+                                          item: items[index],
+                                          subject: subject),
+                                    ),
+                              ),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-          ),
-          floatingActionButton: Container(
-            margin: const EdgeInsets.only(bottom: 60, right: 8),
-            child: FloatingActionButton(
-              onPressed: () => context.goNamed(
-                'new-item',
-                pathParameters: {'subjectId': subjectId},
               ),
-              child: const Icon(Icons.add_rounded),
-            ),
+              Positioned(
+                right: 16,
+                bottom: 80,
+                child: FloatingActionButton(
+                  onPressed: () => context.goNamed(
+                    'new-item',
+                    pathParameters: {'subjectId': subjectId},
+                  ),
+                  child: const Icon(Icons.add_rounded),
+                ),
+              ),
+            ],
           ),
-          floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
         );
       },
     );
