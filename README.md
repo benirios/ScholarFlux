@@ -1,10 +1,14 @@
 <div align="center">
 
-# 📚 ScholarFlux
+<img src="assets/screenshots/app_icon.png" width="120" alt="ScholarFlux" style="border-radius: 24px;" />
+
+# ScholarFlux
 
 **Your study life, organized.**
 
 A beautiful, offline-first Flutter app to manage subjects, assignments, tests, grades, and your weekly class schedule — wrapped in a sleek Liquid Glass dark UI.
+
+<br/>
 
 [![Flutter](https://img.shields.io/badge/Flutter-3.41-02569B?logo=flutter&logoColor=white)](https://flutter.dev)
 [![Dart](https://img.shields.io/badge/Dart-3.x-0175C2?logo=dart&logoColor=white)](https://dart.dev)
