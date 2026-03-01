@@ -26,108 +26,99 @@ class ScheduleScreen extends ConsumerWidget {
     });
 
     return Scaffold(
-      body: Stack(
-        children: [
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: CustomScrollView(
-                slivers: [
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.only(top: 16, bottom: 16),
-                      child: Text('Schedule', style: AppTypography.headerLarge),
-                    ),
-                  ),
-                  classesAsync.when(
-                    loading: () => const SliverToBoxAdapter(
-                        child: Center(child: CircularProgressIndicator())),
-                    error: (e, _) => SliverToBoxAdapter(
-                        child: Text('Error: $e',
-                            style: AppTypography.body
-                                .copyWith(color: AppColors.error))),
-                    data: (classes) {
-                      if (classes.isEmpty) {
-                        return SliverToBoxAdapter(
-                          child: GlassContainer(
-                            borderRadius: 20,
-                            padding: const EdgeInsets.symmetric(vertical: 48),
-                            child: Column(
-                              children: [
-                                Icon(Icons.schedule_rounded,
-                                    size: 48, color: AppColors.textTertiary),
-                                const SizedBox(height: 12),
-                                Text('No classes registered',
-                                    style: AppTypography.cardSubtitle),
-                                const SizedBox(height: 4),
-                                Text('Tap + to add one',
-                                    style: AppTypography.caption
-                                        .copyWith(color: AppColors.textTertiary)),
-                              ],
-                            ),
-                          ),
-                        );
-                      }
-
-                      // Group by day of week
-                      final byDay = <int, List<ClassEntry>>{};
-                      for (final c in classes) {
-                        byDay.putIfAbsent(c.dayOfWeek, () => []).add(c);
-                      }
-                      final sortedDays = byDay.keys.toList()..sort();
-
-                      final widgets = <Widget>[];
-                      for (final day in sortedDays) {
-                        final dayClasses = byDay[day]!
-                          ..sort((a, b) => a.compareTo(b));
-                        widgets.add(Padding(
-                          padding: const EdgeInsets.only(top: 16, bottom: 8),
-                          child: Text(
-                            ClassEntry.weekdayLabels[day],
-                            style: AppTypography.sectionTitle,
-                          ),
-                        ));
-                        for (final c in dayClasses) {
-                          widgets.add(Padding(
-                            padding: const EdgeInsets.only(bottom: 8),
-                            child: _ClassTile(
-                              entry: c,
-                              subjectName: subjectNames[c.subjectId] ?? '',
-                              onTap: () => context.goNamed(
-                                'edit-class',
-                                pathParameters: {'classId': c.id},
-                              ),
-                              onDelete: () => _confirmDelete(context, ref, c),
-                            ),
-                          ));
-                        }
-                      }
-
-                      return SliverList(
-                        delegate: SliverChildBuilderDelegate(
-                          (_, i) => AnimatedListItem(
-                            index: i,
-                            child: widgets[i],
-                          ),
-                          childCount: widgets.length,
-                        ),
-                      );
-                    },
-                  ),
-                  const SliverToBoxAdapter(child: SizedBox(height: 80)),
-                ],
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: CustomScrollView(
+            slivers: [
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 16, bottom: 16),
+                  child: Text('Schedule', style: AppTypography.headerLarge),
+                ),
               ),
-            ),
+              classesAsync.when(
+                loading: () => const SliverToBoxAdapter(
+                    child: Center(child: CircularProgressIndicator())),
+                error: (e, _) => SliverToBoxAdapter(
+                    child: Text('Error: $e',
+                        style: AppTypography.body
+                            .copyWith(color: AppColors.error))),
+                data: (classes) {
+                  if (classes.isEmpty) {
+                    return SliverToBoxAdapter(
+                      child: GlassContainer(
+                        borderRadius: 20,
+                        padding: const EdgeInsets.symmetric(vertical: 48),
+                        child: Column(
+                          children: [
+                            Icon(Icons.schedule_rounded,
+                                size: 48, color: AppColors.textTertiary),
+                            const SizedBox(height: 12),
+                            Text('No classes registered',
+                                style: AppTypography.cardSubtitle),
+                            const SizedBox(height: 4),
+                            Text('Tap + to add one',
+                                style: AppTypography.caption
+                                    .copyWith(color: AppColors.textTertiary)),
+                          ],
+                        ),
+                      ),
+                    );
+                  }
+
+                  // Group by day of week
+                  final byDay = <int, List<ClassEntry>>{};
+                  for (final c in classes) {
+                    byDay.putIfAbsent(c.dayOfWeek, () => []).add(c);
+                  }
+                  final sortedDays = byDay.keys.toList()..sort();
+
+                  final widgets = <Widget>[];
+                  for (final day in sortedDays) {
+                    final dayClasses = byDay[day]!
+                      ..sort((a, b) => a.compareTo(b));
+                    widgets.add(Padding(
+                      padding: const EdgeInsets.only(top: 16, bottom: 8),
+                      child: Text(
+                        ClassEntry.weekdayLabels[day],
+                        style: AppTypography.sectionTitle,
+                      ),
+                    ));
+                    for (final c in dayClasses) {
+                      widgets.add(Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: _ClassTile(
+                          entry: c,
+                          subjectName: subjectNames[c.subjectId] ?? '',
+                          onTap: () => context.goNamed(
+                            'edit-class',
+                            pathParameters: {'classId': c.id},
+                          ),
+                          onDelete: () => _confirmDelete(context, ref, c),
+                        ),
+                      ));
+                    }
+                  }
+
+                  return SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (_, i) => AnimatedListItem(
+                        index: i,
+                        child: widgets[i],
+                      ),
+                      childCount: widgets.length,
+                    ),
+                  );
+                },
+              ),
+            ],
           ),
-          Positioned(
-            right: 16,
-            bottom: 80,
-            child: FloatingActionButton(
-              onPressed: () => context.goNamed('new-class'),
-              child: const Icon(Icons.add_rounded),
-            ),
-          ),
-        ],
+        ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => context.goNamed('new-class'),
+        child: const Icon(Icons.add_rounded),
       ),
     );
   }

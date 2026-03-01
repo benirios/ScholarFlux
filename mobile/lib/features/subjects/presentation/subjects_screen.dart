@@ -18,18 +18,16 @@ class SubjectsScreen extends ConsumerWidget {
     final subjectsAsync = ref.watch(subjectsProvider);
 
     return Scaffold(
-      body: Stack(
-        children: [
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: CustomScrollView(
-                slivers: [
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.only(top: 16, bottom: 20),
-                      child: _SubjectsHeader(),
-                    ),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: CustomScrollView(
+            slivers: [
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 16, bottom: 20),
+                  child: _SubjectsHeader(),
+                ),
               ),
               subjectsAsync.when(
                 loading: () => const SliverFillRemaining(
@@ -77,22 +75,13 @@ class SubjectsScreen extends ConsumerWidget {
                         ),
                       ),
               ),
-              const SliverToBoxAdapter(
-                child: SizedBox(height: 80),
-              ),
             ],
           ),
         ),
       ),
-      Positioned(
-        right: 16,
-        bottom: 80,
-        child: FloatingActionButton(
-          onPressed: () => context.goNamed('new-subject'),
-          child: const Icon(Icons.add_rounded),
-        ),
-      ),
-        ],
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => context.goNamed('new-subject'),
+        child: const Icon(Icons.add_rounded),
       ),
     );
   }
