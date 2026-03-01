@@ -78,7 +78,17 @@ A beautiful, offline-first Flutter app to manage subjects, assignments, tests, g
 
 ## 📸 Screenshots
 
-> *Coming soon — run the app to see the Liquid Glass UI in action!*
+<p align="center">
+  <img src="assets/screenshots/dashboard.png" width="180" alt="Dashboard" />
+  <img src="assets/screenshots/subjects.png" width="180" alt="Subjects" />
+  <img src="assets/screenshots/calendar.png" width="180" alt="Calendar" />
+  <img src="assets/screenshots/schedule.png" width="180" alt="Schedule" />
+  <img src="assets/screenshots/analytics.png" width="180" alt="Analytics" />
+</p>
+
+| Dashboard | Subjects | Calendar | Schedule | Analytics |
+|:---------:|:--------:|:--------:|:--------:|:---------:|
+| Today's classes & upcoming items | Weighted grading domains | Monthly view with indicators | Weekly class timetable | Grade trends per subject |
 
 ---
 
