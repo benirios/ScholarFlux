@@ -92,6 +92,8 @@ final itemsBySubjectProvider =
 /// Single item by ID.
 final itemByIdProvider =
     FutureProvider.family<Item?, String>((ref, id) async {
+  // Watch itemsProvider to auto-refresh when items change
+  await ref.watch(itemsProvider.future);
   final repo = ref.watch(itemRepositoryProvider);
   return repo.getById(id);
 });

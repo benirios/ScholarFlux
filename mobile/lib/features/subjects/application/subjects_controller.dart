@@ -58,6 +58,8 @@ class SubjectsNotifier extends AsyncNotifier<List<Subject>> {
 /// Provider to get a single subject by ID.
 final subjectByIdProvider =
     FutureProvider.family<Subject?, String>((ref, id) async {
+  // Watch subjectsProvider to auto-refresh when subjects change
+  await ref.watch(subjectsProvider.future);
   final repo = ref.watch(subjectRepositoryProvider);
   return repo.getById(id);
 });
