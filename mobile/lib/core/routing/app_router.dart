@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'nav_shell.dart';
+import '../storage/app_preferences.dart';
 import '../../features/onboarding/presentation/onboarding_screen.dart';
 import '../../features/dashboard/presentation/dashboard_screen.dart';
 import '../../features/subjects/presentation/subjects_screen.dart';
@@ -36,7 +37,7 @@ CustomTransitionPage<void> _fadeSlide(GoRouterState state, Widget child) {
 }
 
 final goRouter = GoRouter(
-  initialLocation: '/dashboard',
+  initialLocation: AppPreferences.hasSeenOnboarding ? '/dashboard' : '/onboarding',
   routes: [
     GoRoute(
       path: '/onboarding',

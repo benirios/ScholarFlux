@@ -276,7 +276,7 @@ For a deep-dive into every function, class, provider, and widget — including c
 - [x] Weekly class schedule management
 - [x] Liquid Glass UI theme
 - [x] Offline-first with Hive
-- [ ] Onboarding flow completion (skip/done buttons)
+- [x] Onboarding flow with rich glass visuals
 - [ ] Cloud sync (Firebase / Supabase)
 - [ ] Push notifications for due dates
 - [ ] Grade trend charts and analytics
@@ -285,15 +285,4 @@ For a deep-dive into every function, class, provider, and widget — including c
 - [ ] Widget for home screen (iOS/Android)
 - [ ] Localization (PT, EN, ES)
 
----
-
-## 🤝 Contributing
-
-PRs welcome! Keep changes small and focused. For major features, open an issue first to discuss design and UX.
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
 
