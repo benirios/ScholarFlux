@@ -402,7 +402,7 @@ class _TimeWheelPickerState extends State<_TimeWheelPicker> {
             physics: const FixedExtentScrollPhysics(),
             diameterRatio: 1.2,
             onSelectedItemChanged: (i) {
-              _hour = i;
+              setState(() => _hour = i);
               _notify();
             },
             childDelegate: ListWheelChildBuilderDelegate(
@@ -429,7 +429,7 @@ class _TimeWheelPickerState extends State<_TimeWheelPicker> {
             physics: const FixedExtentScrollPhysics(),
             diameterRatio: 1.2,
             onSelectedItemChanged: (i) {
-              _minute = i;
+              setState(() => _minute = i);
               _notify();
             },
             childDelegate: ListWheelChildBuilderDelegate(
