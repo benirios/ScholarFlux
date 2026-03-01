@@ -59,23 +59,59 @@ class _EditClassScreenState extends ConsumerState<EditClassScreen> {
 
   Future<void> _pickTime({required bool isStart}) async {
     final initial = isStart ? _startTime : _endTime;
-    final picked = await showTimePicker(
+    TimeOfDay picked = initial;
+
+    await showModalBottomSheet(
       context: context,
-      initialTime: initial,
-      builder: (context, child) => MediaQuery(
-        data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true),
-        child: child!,
+      backgroundColor: AppColors.surfaceCard,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => SizedBox(
+        height: 280,
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    child: Text('Cancel',
+                        style: AppTypography.body
+                            .copyWith(color: AppColors.textSecondary)),
+                  ),
+                  Text(isStart ? 'Start Time' : 'End Time',
+                      style: AppTypography.cardTitle),
+                  TextButton(
+                    onPressed: () {
+                      setState(() {
+                        if (isStart) {
+                          _startTime = picked;
+                        } else {
+                          _endTime = picked;
+                        }
+                      });
+                      Navigator.pop(ctx);
+                    },
+                    child: Text('Done',
+                        style: AppTypography.body
+                            .copyWith(color: AppColors.primary)),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: _TimeWheelPicker(
+                initialTime: initial,
+                onChanged: (t) => picked = t,
+              ),
+            ),
+          ],
+        ),
       ),
     );
-    if (picked != null) {
-      setState(() {
-        if (isStart) {
-          _startTime = picked;
-        } else {
-          _endTime = picked;
-        }
-      });
-    }
   }
 
   Future<void> _save() async {
@@ -310,6 +346,108 @@ class _EditClassScreenState extends ConsumerState<EditClassScreen> {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _TimeWheelPicker extends StatefulWidget {
+  final TimeOfDay initialTime;
+  final ValueChanged<TimeOfDay> onChanged;
+
+  const _TimeWheelPicker({
+    required this.initialTime,
+    required this.onChanged,
+  });
+
+  @override
+  State<_TimeWheelPicker> createState() => _TimeWheelPickerState();
+}
+
+class _TimeWheelPickerState extends State<_TimeWheelPicker> {
+  late FixedExtentScrollController _hourController;
+  late FixedExtentScrollController _minuteController;
+  late int _hour;
+  late int _minute;
+
+  @override
+  void initState() {
+    super.initState();
+    _hour = widget.initialTime.hour;
+    _minute = widget.initialTime.minute;
+    _hourController = FixedExtentScrollController(initialItem: _hour);
+    _minuteController = FixedExtentScrollController(initialItem: _minute);
+  }
+
+  @override
+  void dispose() {
+    _hourController.dispose();
+    _minuteController.dispose();
+    super.dispose();
+  }
+
+  void _notify() {
+    widget.onChanged(TimeOfDay(hour: _hour, minute: _minute));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        SizedBox(
+          width: 70,
+          child: ListWheelScrollView.useDelegate(
+            controller: _hourController,
+            itemExtent: 44,
+            physics: const FixedExtentScrollPhysics(),
+            diameterRatio: 1.2,
+            onSelectedItemChanged: (i) {
+              _hour = i;
+              _notify();
+            },
+            childDelegate: ListWheelChildBuilderDelegate(
+              childCount: 24,
+              builder: (context, index) => Center(
+                child: Text(
+                  index.toString().padLeft(2, '0'),
+                  style: AppTypography.headerLarge.copyWith(
+                    color: index == _hour
+                        ? AppColors.textPrimary
+                        : AppColors.textTertiary,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+        Text(':', style: AppTypography.headerLarge),
+        SizedBox(
+          width: 70,
+          child: ListWheelScrollView.useDelegate(
+            controller: _minuteController,
+            itemExtent: 44,
+            physics: const FixedExtentScrollPhysics(),
+            diameterRatio: 1.2,
+            onSelectedItemChanged: (i) {
+              _minute = i;
+              _notify();
+            },
+            childDelegate: ListWheelChildBuilderDelegate(
+              childCount: 60,
+              builder: (context, index) => Center(
+                child: Text(
+                  index.toString().padLeft(2, '0'),
+                  style: AppTypography.headerLarge.copyWith(
+                    color: index == _minute
+                        ? AppColors.textPrimary
+                        : AppColors.textTertiary,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
