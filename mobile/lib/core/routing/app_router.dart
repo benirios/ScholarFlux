@@ -12,6 +12,7 @@ import '../../features/items/presentation/item_detail_screen.dart';
 import '../../features/calendar/presentation/calendar_screen.dart';
 import '../../features/classes/presentation/schedule_screen.dart';
 import '../../features/classes/presentation/edit_class_screen.dart';
+import '../../features/analytics/presentation/analytics_screen.dart';
 
 /// Smooth fade+slide page transition for inner routes.
 CustomTransitionPage<void> _fadeSlide(GoRouterState state, Widget child) {
@@ -55,6 +56,14 @@ final goRouter = GoRouter(
               path: '/dashboard',
               name: 'dashboard',
               builder: (context, state) => const DashboardScreen(),
+              routes: [
+                GoRoute(
+                  path: 'analytics',
+                  name: 'analytics',
+                  pageBuilder: (context, state) =>
+                      _fadeSlide(state, const AnalyticsScreen()),
+                ),
+              ],
             ),
           ],
         ),

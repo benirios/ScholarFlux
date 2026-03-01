@@ -49,7 +49,41 @@ class DashboardScreen extends ConsumerWidget {
               ),
               const SliverToBoxAdapter(child: SizedBox(height: 20)),
 
-              // "Aulas" section (today's classes)
+              // Analytics entry
+              SliverToBoxAdapter(
+                child: GlassContainer(
+                  borderRadius: 16,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  onTap: () => context.goNamed('analytics'),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: AppColors.primaryGlow,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(Icons.analytics_rounded,
+                            color: AppColors.primary, size: 20),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Analytics', style: AppTypography.cardTitle),
+                            Text('Grades & completion overview',
+                                style: AppTypography.caption),
+                          ],
+                        ),
+                      ),
+                      const Icon(Icons.chevron_right_rounded,
+                          color: AppColors.textTertiary, size: 22),
+                    ],
+                  ),
+                ),
+              ),
+              const SliverToBoxAdapter(child: SizedBox(height: 20)),
               SliverToBoxAdapter(
                 child: Text('Classes'.toUpperCase(), style: AppTypography.sectionTitle.copyWith(letterSpacing: 0.5)),
               ),
