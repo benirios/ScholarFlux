@@ -265,12 +265,13 @@ class _EditClassScreenState extends ConsumerState<EditClassScreen> {
                 Expanded(
                   child: GestureDetector(
                     onTap: () => _pickTime(isStart: true),
-                    child: AbsorbPointer(
-                      child: TextField(
-                        decoration: InputDecoration(
-                          hintText: 'Start: ${_formatTime(_startTime)}',
-                          suffixIcon: const Icon(Icons.access_time_rounded, size: 18),
-                        ),
+                    child: InputDecorator(
+                      decoration: const InputDecoration(
+                        labelText: 'Start',
+                        suffixIcon: Icon(Icons.access_time_rounded, size: 18),
+                      ),
+                      child: Text(
+                        _formatTime(_startTime),
                         style: AppTypography.body,
                       ),
                     ),
@@ -280,12 +281,13 @@ class _EditClassScreenState extends ConsumerState<EditClassScreen> {
                 Expanded(
                   child: GestureDetector(
                     onTap: () => _pickTime(isStart: false),
-                    child: AbsorbPointer(
-                      child: TextField(
-                        decoration: InputDecoration(
-                          hintText: 'End: ${_formatTime(_endTime)}',
-                          suffixIcon: const Icon(Icons.access_time_rounded, size: 18),
-                        ),
+                    child: InputDecorator(
+                      decoration: const InputDecoration(
+                        labelText: 'End',
+                        suffixIcon: Icon(Icons.access_time_rounded, size: 18),
+                      ),
+                      child: Text(
+                        _formatTime(_endTime),
                         style: AppTypography.body,
                       ),
                     ),
