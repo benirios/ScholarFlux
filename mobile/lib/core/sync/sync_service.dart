@@ -12,9 +12,12 @@ import '../../data/repositories/hive_subject_repository.dart';
 import '../../data/repositories/hive_item_repository.dart';
 import '../../data/repositories/hive_class_repository.dart';
 import '../../features/subjects/domain/subject.dart';
+import '../../features/subjects/application/subjects_controller.dart';
 import '../../features/items/domain/item.dart';
 import '../../features/items/domain/item_type.dart';
+import '../../features/items/application/items_controller.dart';
 import '../../features/classes/domain/class_entry.dart';
+import '../../features/classes/application/classes_controller.dart';
 import '../auth/clerk_auth_service.dart';
 import 'sync_queue.dart';
 import 'sync_status.dart';
@@ -32,6 +35,7 @@ class SyncService {
   final HiveSubjectRepository _subjectRepo;
   final HiveItemRepository _itemRepo;
   final HiveClassRepository _classRepo;
+  final void Function()? onSyncComplete;
   late final SupabaseSubjectDatasource _remoteSubjects;
   late final SupabaseItemDatasource _remoteItems;
   late final SupabaseClassDatasource _remoteClasses;
@@ -46,6 +50,7 @@ class SyncService {
     required HiveSubjectRepository subjectRepo,
     required HiveItemRepository itemRepo,
     required HiveClassRepository classRepo,
+    this.onSyncComplete,
   })  : _supabase = supabase,
         _subjectRepo = subjectRepo,
         _itemRepo = itemRepo,
@@ -65,16 +70,20 @@ class SyncService {
     _isSyncing = true;
 
     try {
-      dev.log('[SyncService] Starting full sync...');
+      dev.log('[SyncService] Starting full sync for user: $_userId');
 
-      // 1. Push local pending changes
-      await _processQueue();
+      // 1. Push ALL local data to Supabase (handles both queue and initial push)
+      await _pushAllLocal();
 
-      // 2. Pull all remote data and merge
+      // 2. Clear the sync queue since we just pushed everything
+      await SyncQueue.clear();
+
+      // 3. Pull all remote data and merge
       await _pullAndMerge();
 
       _lastSyncTime = DateTime.now().toUtc();
       dev.log('[SyncService] Full sync complete.');
+      onSyncComplete?.call();
     } catch (e, st) {
       dev.log('[SyncService] Full sync error: $e', stackTrace: st);
     } finally {
@@ -82,54 +91,48 @@ class SyncService {
     }
   }
 
-  // ── Process Sync Queue ────────────────────────────────────
+  // ── Push All Local Data ─────────────────────────────────
 
-  /// Push all pending local operations to Supabase.
-  Future<void> _processQueue() async {
+  /// Push ALL local Hive data to Supabase (not just queue).
+  /// This handles both initial sync and incremental changes.
+  Future<void> _pushAllLocal() async {
     final userId = _userId;
     if (userId == null) return;
 
-    final operations = SyncQueue.getAll();
-    dev.log('[SyncService] Processing ${operations.length} queued operations');
-
-    for (final op in operations) {
+    // Push all local subjects (including soft-deleted ones)
+    final allSubjectMaps = _subjectRepo.getAllIncludingDeleted();
+    dev.log('[SyncService] Pushing ${allSubjectMaps.length} local subjects...');
+    for (final subject in allSubjectMaps) {
       try {
-        switch (op.table) {
-          case 'subjects':
-            if (op.action == 'upsert') {
-              final subject = await _subjectRepo.getById(op.recordId);
-              if (subject != null) {
-                await _remoteSubjects.upsert(subject, userId);
-                await _subjectRepo.update(
-                    subject.copyWith(syncStatus: SyncStatus.synced));
-              }
-            }
-            break;
-          case 'items':
-            if (op.action == 'upsert') {
-              final item = await _itemRepo.getById(op.recordId);
-              if (item != null) {
-                await _remoteItems.upsert(item, userId);
-                await _itemRepo
-                    .update(item.copyWith(syncStatus: SyncStatus.synced));
-              }
-            }
-            break;
-          case 'classes':
-            if (op.action == 'upsert') {
-              final entry = await _classRepo.getById(op.recordId);
-              if (entry != null) {
-                await _remoteClasses.upsert(entry, userId);
-                await _classRepo
-                    .update(entry.copyWith(syncStatus: SyncStatus.synced));
-              }
-            }
-            break;
-        }
-        await SyncQueue.remove(op.id);
+        await _remoteSubjects.upsert(subject, userId);
+        // Mark as synced locally (use update to avoid re-enqueue)
+        await _subjectRepo.update(subject.copyWith(syncStatus: SyncStatus.synced));
       } catch (e) {
-        dev.log('[SyncService] Failed to process op ${op.id}: $e');
-        // Leave in queue for retry
+        dev.log('[SyncService] Failed to push subject ${subject.id}: $e');
+      }
+    }
+
+    // Push all local items
+    final allItems = _itemRepo.getAllIncludingDeleted();
+    dev.log('[SyncService] Pushing ${allItems.length} local items...');
+    for (final item in allItems) {
+      try {
+        await _remoteItems.upsert(item, userId);
+        await _itemRepo.update(item.copyWith(syncStatus: SyncStatus.synced));
+      } catch (e) {
+        dev.log('[SyncService] Failed to push item ${item.id}: $e');
+      }
+    }
+
+    // Push all local classes
+    final allClasses = _classRepo.getAllIncludingDeleted();
+    dev.log('[SyncService] Pushing ${allClasses.length} local classes...');
+    for (final entry in allClasses) {
+      try {
+        await _remoteClasses.upsert(entry, userId);
+        await _classRepo.update(entry.copyWith(syncStatus: SyncStatus.synced));
+      } catch (e) {
+        dev.log('[SyncService] Failed to push class ${entry.id}: $e');
       }
     }
   }
@@ -143,48 +146,63 @@ class SyncService {
     if (userId == null) return;
 
     // Pull subjects
-    final remoteSubjects = await _remoteSubjects.getAll(userId);
-    for (final remote in remoteSubjects) {
-      final local = await _subjectRepo.getById(remote.id);
-      if (local == null ||
-          remote.updatedAt.isAfter(local.updatedAt) &&
-              local.syncStatus == SyncStatus.synced) {
-        if (remote.deletedAt != null) {
-          await _subjectRepo.delete(remote.id);
-        } else {
-          await _subjectRepo.add(remote.copyWith(syncStatus: SyncStatus.synced));
+    try {
+      final remoteSubjects = await _remoteSubjects.getAll(userId);
+      dev.log('[SyncService] Pulled ${remoteSubjects.length} remote subjects');
+      for (final remote in remoteSubjects) {
+        final local = await _subjectRepo.getById(remote.id);
+        if (local == null ||
+            remote.updatedAt.isAfter(local.updatedAt) &&
+                local.syncStatus == SyncStatus.synced) {
+          if (remote.deletedAt != null) {
+            await _subjectRepo.hardDelete(remote.id);
+          } else {
+            await _subjectRepo.update(remote.copyWith(syncStatus: SyncStatus.synced));
+          }
         }
       }
+    } catch (e) {
+      dev.log('[SyncService] Failed to pull subjects: $e');
     }
 
     // Pull items
-    final remoteItems = await _remoteItems.getAll(userId);
-    for (final remote in remoteItems) {
-      final local = await _itemRepo.getById(remote.id);
-      if (local == null ||
-          remote.updatedAt.isAfter(local.updatedAt) &&
-              local.syncStatus == SyncStatus.synced) {
-        if (remote.deletedAt != null) {
-          await _itemRepo.delete(remote.id);
-        } else {
-          await _itemRepo.add(remote.copyWith(syncStatus: SyncStatus.synced));
+    try {
+      final remoteItems = await _remoteItems.getAll(userId);
+      dev.log('[SyncService] Pulled ${remoteItems.length} remote items');
+      for (final remote in remoteItems) {
+        final local = await _itemRepo.getById(remote.id);
+        if (local == null ||
+            remote.updatedAt.isAfter(local.updatedAt) &&
+                local.syncStatus == SyncStatus.synced) {
+          if (remote.deletedAt != null) {
+            await _itemRepo.hardDelete(remote.id);
+          } else {
+            await _itemRepo.update(remote.copyWith(syncStatus: SyncStatus.synced));
+          }
         }
       }
+    } catch (e) {
+      dev.log('[SyncService] Failed to pull items: $e');
     }
 
     // Pull classes
-    final remoteClasses = await _remoteClasses.getAll(userId);
-    for (final remote in remoteClasses) {
-      final local = await _classRepo.getById(remote.id);
-      if (local == null ||
-          remote.updatedAt.isAfter(local.updatedAt) &&
-              local.syncStatus == SyncStatus.synced) {
-        if (remote.deletedAt != null) {
-          await _classRepo.delete(remote.id);
-        } else {
-          await _classRepo.add(remote.copyWith(syncStatus: SyncStatus.synced));
+    try {
+      final remoteClasses = await _remoteClasses.getAll(userId);
+      dev.log('[SyncService] Pulled ${remoteClasses.length} remote classes');
+      for (final remote in remoteClasses) {
+        final local = await _classRepo.getById(remote.id);
+        if (local == null ||
+            remote.updatedAt.isAfter(local.updatedAt) &&
+                local.syncStatus == SyncStatus.synced) {
+          if (remote.deletedAt != null) {
+            await _classRepo.hardDelete(remote.id);
+          } else {
+            await _classRepo.update(remote.copyWith(syncStatus: SyncStatus.synced));
+          }
         }
       }
+    } catch (e) {
+      dev.log('[SyncService] Failed to pull classes: $e');
     }
   }
 
@@ -262,7 +280,7 @@ class SyncService {
         case 'subjects':
           if (payload.eventType == PostgresChangeEvent.delete) {
             if (oldRecord.containsKey('id')) {
-              await _subjectRepo.delete(oldRecord['id'] as String);
+              await _subjectRepo.hardDelete(oldRecord['id'] as String);
             }
           } else if (newRecord.isNotEmpty) {
             final remote = _remoteSubjectFromRow(newRecord);
@@ -270,10 +288,10 @@ class SyncService {
             // Only overwrite if local is synced (no pending local changes)
             if (local == null || local.syncStatus == SyncStatus.synced) {
               if (remote.deletedAt != null) {
-                await _subjectRepo.delete(remote.id);
+                await _subjectRepo.hardDelete(remote.id);
               } else {
                 await _subjectRepo
-                    .add(remote.copyWith(syncStatus: SyncStatus.synced));
+                    .update(remote.copyWith(syncStatus: SyncStatus.synced));
               }
             }
           }
@@ -281,17 +299,17 @@ class SyncService {
         case 'items':
           if (payload.eventType == PostgresChangeEvent.delete) {
             if (oldRecord.containsKey('id')) {
-              await _itemRepo.delete(oldRecord['id'] as String);
+              await _itemRepo.hardDelete(oldRecord['id'] as String);
             }
           } else if (newRecord.isNotEmpty) {
             final remote = _remoteItemFromRow(newRecord);
             final local = await _itemRepo.getById(remote.id);
             if (local == null || local.syncStatus == SyncStatus.synced) {
               if (remote.deletedAt != null) {
-                await _itemRepo.delete(remote.id);
+                await _itemRepo.hardDelete(remote.id);
               } else {
                 await _itemRepo
-                    .add(remote.copyWith(syncStatus: SyncStatus.synced));
+                    .update(remote.copyWith(syncStatus: SyncStatus.synced));
               }
             }
           }
@@ -299,22 +317,23 @@ class SyncService {
         case 'classes':
           if (payload.eventType == PostgresChangeEvent.delete) {
             if (oldRecord.containsKey('id')) {
-              await _classRepo.delete(oldRecord['id'] as String);
+              await _classRepo.hardDelete(oldRecord['id'] as String);
             }
           } else if (newRecord.isNotEmpty) {
             final remote = _remoteClassFromRow(newRecord);
             final local = await _classRepo.getById(remote.id);
             if (local == null || local.syncStatus == SyncStatus.synced) {
               if (remote.deletedAt != null) {
-                await _classRepo.delete(remote.id);
+                await _classRepo.hardDelete(remote.id);
               } else {
                 await _classRepo
-                    .add(remote.copyWith(syncStatus: SyncStatus.synced));
+                    .update(remote.copyWith(syncStatus: SyncStatus.synced));
               }
             }
           }
           break;
       }
+      onSyncComplete?.call();
     } catch (e) {
       dev.log('[SyncService] Realtime handler error: $e');
     }
@@ -408,6 +427,11 @@ final syncServiceProvider = Provider<SyncService>((ref) {
     subjectRepo: HiveSubjectRepository(),
     itemRepo: HiveItemRepository(),
     classRepo: HiveClassRepository(),
+    onSyncComplete: () {
+      ref.invalidate(subjectsProvider);
+      ref.invalidate(itemsProvider);
+      ref.invalidate(classesProvider);
+    },
   );
   ref.onDispose(service.dispose);
   return service;
