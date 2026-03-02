@@ -2,6 +2,7 @@ import 'package:clerk_flutter/clerk_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/sync/sync_service.dart';
 import '../../../core/theme/colors.dart';
 import '../../../core/theme/typography.dart';
 import '../../../core/widgets/animations.dart';
@@ -440,11 +441,38 @@ class _PlaceholderCard extends StatelessWidget {
 
 /// Button in dashboard header: shows cloud-off icon when signed out
 /// (tapping navigates to sign-in), cloud-done icon when signed in.
-class _SyncButton extends StatelessWidget {
+/// Automatically triggers fullSync + Realtime when user is signed in.
+class _SyncButton extends ConsumerStatefulWidget {
+  @override
+  ConsumerState<_SyncButton> createState() => _SyncButtonState();
+}
+
+class _SyncButtonState extends ConsumerState<_SyncButton> {
+  bool _syncTriggered = false;
+
+  void _triggerSyncIfNeeded(bool isSignedIn) {
+    if (isSignedIn && !_syncTriggered) {
+      _syncTriggered = true;
+      final syncService = ref.read(syncServiceProvider);
+      syncService.fullSync();
+      syncService.subscribeToRealtime();
+    } else if (!isSignedIn) {
+      _syncTriggered = false;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    // Watch connectivity to auto-sync on reconnect
+    ref.watch(syncOnConnectivityProvider);
+
     final authState = ClerkAuth.of(context);
     final isSignedIn = authState.user != null;
+
+    // Trigger sync after sign-in
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _triggerSyncIfNeeded(isSignedIn);
+    });
 
     return GestureDetector(
       onTap: () {
@@ -464,7 +492,7 @@ class _SyncButton extends StatelessWidget {
                       color: AppColors.primary, size: 48),
                   const SizedBox(height: 12),
                   Text(
-                    'Synced',
+                    'Cloud Sync',
                     style: AppTypography.cardTitle
                         .copyWith(color: AppColors.primary),
                   ),
@@ -474,6 +502,22 @@ class _SyncButton extends StatelessWidget {
                     style: AppTypography.cardSubtitle,
                   ),
                   const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        ref.read(syncServiceProvider).fullSync();
+                        Navigator.pop(ctx);
+                      },
+                      icon: const Icon(Icons.sync_rounded),
+                      label: const Text('Sync now'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.white,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
                   SizedBox(
                     width: double.infinity,
                     child: OutlinedButton(
