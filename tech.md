@@ -46,6 +46,16 @@ A Flutter mobile app for students to manage subjects, assignments, tests, homewo
    - [ScheduleScreen](#schedulescreen)
    - [EditClassScreen](#editclassscreen)
 10. [Feature: Onboarding](#feature-onboarding)
+11. [Cloud Sync Layer](#cloud-sync-layer)
+    - [Architecture Overview](#cloud-sync-architecture-overview)
+    - [Authentication (Clerk)](#authentication-clerk)
+    - [Supabase Client Integration](#supabase-client-integration)
+    - [Sync Status & Queue](#sync-status--queue)
+    - [SyncService — Orchestrator](#syncservice--orchestrator)
+    - [Remote Datasources](#remote-datasources)
+    - [Realtime Subscriptions](#realtime-subscriptions)
+    - [Connectivity-Aware Sync](#connectivity-aware-sync)
+    - [Supabase Schema & RLS](#supabase-schema--rls)
 
 ---
 
@@ -948,3 +958,518 @@ class OnboardingScreen extends StatelessWidget {
 ```
 
 **Logic:** A simple 3-page horizontal `PageView`. Each page (`_OnboardingPage`) centers an icon, title, and subtitle vertically. The user swipes between pages. Currently no "Skip" or "Get Started" button wired to `AppPreferences.setOnboardingSeen()`.
+
+---
+
+## Cloud Sync Layer
+
+### Cloud Sync Architecture Overview
+
+ScholarFlux uses a **local-first, sync-on-write** architecture. All data is persisted to Hive immediately, then pushed to Supabase in the background. Incoming changes from other devices arrive via Supabase Realtime and are merged into Hive using a last-write-wins strategy.
+
+```
+┌──────────────────────────────────────────────────────────────────┐
+│                        Flutter App                               │
+│                                                                  │
+│  ┌────────────┐    ┌──────────────┐    ┌───────────────────┐    │
+│  │ Controllers │───▶│  Hive Repos  │───▶│    SyncQueue       │    │
+│  │ (Riverpod) │    │  (local DB)  │    │  (pending ops)    │    │
+│  └─────┬──────┘    └──────────────┘    └────────┬──────────┘    │
+│        │                                         │               │
+│        │  ref.invalidate()                       │ pushChanges() │
+│        ◀─────────────────────────────────────────┤               │
+│                                                  ▼               │
+│  ┌──────────────────────────────────────────────────────────┐   │
+│  │                     SyncService                           │   │
+│  │  • pushChanges() — immediate push of pending queue        │   │
+│  │  • fullSync()    — bidirectional push-all + pull + merge  │   │
+│  │  • Realtime      — live subscription for remote changes   │   │
+│  └──────────┬───────────────────────────────────┬───────────┘   │
+│             │                                   │                │
+└─────────────┼───────────────────────────────────┼────────────────┘
+              │ HTTPS (Clerk JWT)                  │ WebSocket
+              ▼                                    ▼
+┌──────────────────────────────────────────────────────────────────┐
+│                     Supabase (PostgreSQL)                         │
+│  • subjects, items, classes tables                                │
+│  • Row Level Security (auth.jwt() ->> 'sub' = user_id)          │
+│  • Realtime publication on all 3 tables                          │
+└──────────────────────────────────────────────────────────────────┘
+              ▲
+              │ JWT (HS256, Supabase secret)
+┌─────────────┴────────────────────────────────────────────────────┐
+│                        Clerk (Auth)                               │
+│  • User sign-in/sign-out                                         │
+│  • JWT template "supabase" with 'sub' claim = user ID            │
+│  • Session token generation for every Supabase request           │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+**Data flow on write:**
+1. User creates/updates/deletes → Controller calls Hive repo
+2. Hive repo persists locally, sets `syncStatus: pendingUpload`, enqueues to `SyncQueue`
+3. Controller calls `ref.invalidateSelf()` (UI refreshes instantly)
+4. Controller fire-and-forgets `syncService.pushChanges()` (background network push)
+5. `pushChanges()` reads queue, pushes each record to Supabase, marks as `synced`
+
+**Data flow on pull (Realtime):**
+1. Supabase Realtime sends a `PostgresChangePayload` via WebSocket
+2. `SyncService._handleRealtimeChange()` deserializes the row into a domain model
+3. Checks if local record has pending changes (skip overwrite if so)
+4. Writes to Hive with `syncStatus: synced`
+5. Calls `onSyncComplete()` → invalidates `subjectsProvider`, `itemsProvider`, `classesProvider`
+6. UI rebuilds with new data
+
+---
+
+### Authentication (Clerk)
+
+**File:** `lib/core/auth/clerk_auth_service.dart`
+
+Clerk provides user authentication via the `clerk_flutter` SDK. The app wraps the widget tree in `ClerkAuth`, and a bridge widget (`_AuthBridge` in `app.dart`) propagates auth state into Riverpod.
+
+```dart
+/// Global reference set by _AuthBridge so the Supabase accessToken
+/// callback can reach Clerk outside the widget tree.
+ClerkAuthState? globalClerkAuthState;
+
+class ClerkAuthHelper {
+  /// Get the Clerk-issued JWT for the "supabase" template.
+  static Future<String?> getToken(ClerkAuthState authState,
+      {String? template}) async {
+    try {
+      final sessionToken =
+          await authState.sessionToken(templateName: template ?? 'supabase');
+      return sessionToken.jwt;
+    } catch (_) {
+      return null;
+    }
+  }
+}
+```
+
+**Riverpod providers:**
+
+| Provider | Type | Purpose |
+|---|---|---|
+| `clerkUserIdProvider` | `NotifierProvider<String?>` | Holds the Clerk user ID, updated by `_AuthBridge` |
+| `isSignedInProvider` | `Provider<bool>` | `true` when `clerkUserIdProvider != null` |
+| `currentUserIdProvider` | `Provider<String?>` | Alias for `clerkUserIdProvider`, used by `SyncService` |
+
+**Auth bridge (`app.dart`):**
+
+```dart
+class _AuthBridgeState extends ConsumerState<_AuthBridge> {
+  String? _lastUserId;
+
+  @override
+  Widget build(BuildContext context) {
+    final authState = ClerkAuth.of(context);
+    final userId = authState.user?.id;
+
+    // Set global reference for Supabase accessToken callback
+    globalClerkAuthState = authState;
+
+    // When userId changes, update Riverpod and trigger initial sync
+    if (userId != _lastUserId) {
+      _lastUserId = userId;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref.read(clerkUserIdProvider.notifier).set(userId);
+        if (userId != null) {
+          Future.microtask(() {
+            final syncService = ref.read(syncServiceProvider);
+            syncService.fullSync();
+            syncService.subscribeToRealtime();
+          });
+        }
+      });
+    }
+    // ... MaterialApp.router
+  }
+}
+```
+
+The `_AuthBridge` ensures three things happen when a user signs in:
+1. `globalClerkAuthState` is set (Supabase can fetch JWTs)
+2. `clerkUserIdProvider` is updated (providers react to auth state)
+3. `fullSync()` + `subscribeToRealtime()` are triggered
+
+---
+
+### Supabase Client Integration
+
+**File:** `lib/data/remote/supabase_client.dart`
+
+Supabase is initialized with a custom `accessToken` callback that returns Clerk JWTs instead of Supabase's built-in auth tokens.
+
+```dart
+class SupabaseClientWrapper {
+  static Future<void> init() async {
+    await Supabase.initialize(
+      url: EnvConfig.supabaseUrl,
+      anonKey: EnvConfig.supabaseAnonKey,
+      accessToken: _clerkAccessToken,  // custom JWT provider
+    );
+  }
+
+  /// Called by Supabase for every authenticated request.
+  static Future<String?> _clerkAccessToken() async {
+    final authState = globalClerkAuthState;
+    if (authState == null) return null;
+    if (authState.user == null) return null;
+    return await ClerkAuthHelper.getToken(authState);
+  }
+}
+```
+
+**Key detail:** The `accessToken` callback is invoked by the Supabase client on every REST API call and Realtime connection. It must return a valid Clerk JWT signed with the Supabase JWT secret (HS256). If it returns `null`, requests fall back to the anon key and RLS blocks all user-scoped data.
+
+**Providers:**
+
+| Provider | Type | Purpose |
+|---|---|---|
+| `supabaseClientProvider` | `Provider<SupabaseClientWrapper>` | Singleton wrapper instance |
+| `supabaseProvider` | `Provider<SupabaseClient>` | Raw `SupabaseClient` for datasources |
+
+---
+
+### Sync Status & Queue
+
+#### SyncStatus (`lib/core/sync/sync_status.dart`)
+
+Every domain model (`Subject`, `Item`, `ClassEntry`) carries a `syncStatus` field that is stored in Hive but **never sent to Supabase**.
+
+```dart
+enum SyncStatus {
+  synced,         // matches remote — safe to overwrite with remote data
+  pendingUpload,  // local change not yet pushed — protect from remote overwrite
+  pendingDelete;  // marked for deletion — push soft-delete then hard-delete
+}
+```
+
+#### SyncQueue (`lib/core/sync/sync_queue.dart`)
+
+A Hive-backed FIFO queue that persists pending operations across app restarts.
+
+```dart
+class SyncQueue {
+  static const String _boxName = 'sync_queue';
+
+  /// Enqueue a sync operation (called by Hive repos after each write).
+  static Future<void> enqueue({
+    required String table,     // 'subjects', 'items', 'classes'
+    required String recordId,  // the record's UUID
+    required String action,    // 'upsert' or 'delete'
+  }) async { ... }
+
+  /// Get all pending operations ordered by creation time.
+  static List<SyncOperation> getAll() { ... }
+
+  /// Remove a single completed operation.
+  static Future<void> remove(String operationId) async { ... }
+
+  /// Clear all operations (called after full sync push).
+  static Future<void> clear() async { ... }
+}
+```
+
+**Enqueue happens inside Hive repositories.** For example, `HiveSubjectRepository.add()`:
+
+```dart
+Future<void> add(Subject subject) async {
+  final s = subject.copyWith(syncStatus: SyncStatus.pendingUpload);
+  await _box.put(s.id, s.toMap());
+  await SyncQueue.enqueue(table: 'subjects', recordId: s.id, action: 'upsert');
+}
+```
+
+Soft deletes also enqueue an upsert (the soft-deleted record with `deletedAt` set is pushed to Supabase):
+
+```dart
+Future<void> delete(String id) async {
+  final subject = Subject.fromMap(Map<String, dynamic>.from(_box.get(id)!));
+  final deleted = subject.copyWith(
+    deletedAt: DateTime.now(),
+    updatedAt: DateTime.now(),
+    syncStatus: SyncStatus.pendingUpload,
+  );
+  await _box.put(id, deleted.toMap());
+  await SyncQueue.enqueue(table: 'subjects', recordId: id, action: 'upsert');
+}
+```
+
+---
+
+### SyncService — Orchestrator
+
+**File:** `lib/core/sync/sync_service.dart`
+
+The central sync coordinator. It owns references to all three Hive repositories and all three Supabase remote datasources.
+
+```dart
+class SyncService {
+  final SupabaseClient _supabase;
+  final String? userId;
+  final HiveSubjectRepository _subjectRepo;
+  final HiveItemRepository _itemRepo;
+  final HiveClassRepository _classRepo;
+  final void Function()? onSyncComplete;  // invalidates UI providers
+  // ...
+}
+```
+
+#### `pushChanges()` — Immediate incremental push
+
+Called by controllers after every CRUD operation. Processes only the pending sync queue items.
+
+```dart
+Future<void> pushChanges() async {
+  final userId = _userId;
+  if (userId == null) return;
+
+  final ops = SyncQueue.getAll();
+  for (final op in ops) {
+    try {
+      switch (op.table) {
+        case 'subjects':
+          final subject = await _subjectRepo.getById(op.recordId);
+          if (subject != null) {
+            await _remoteSubjects.upsert(subject, userId);
+            await _subjectRepo.update(
+              subject.copyWith(syncStatus: SyncStatus.synced));
+          }
+          break;
+        case 'items': // analogous
+        case 'classes': // analogous
+      }
+      await SyncQueue.remove(op.id);
+    } catch (e) {
+      dev.log('[SyncService] Failed to push ${op.table}/${op.recordId}: $e');
+    }
+  }
+}
+```
+
+#### `fullSync()` — Bidirectional sync on startup/reconnect
+
+```dart
+Future<void> fullSync() async {
+  if (_isSyncing || _userId == null) return;
+  _isSyncing = true;
+  try {
+    await _pushAllLocal();    // 1. Push ALL local Hive data to Supabase
+    await SyncQueue.clear();  // 2. Clear queue (everything just pushed)
+    await _pullAndMerge();    // 3. Pull remote data and merge into Hive
+    onSyncComplete?.call();   // 4. Invalidate UI providers
+  } finally {
+    _isSyncing = false;
+  }
+}
+```
+
+#### `_pullAndMerge()` — Last-write-wins merge
+
+For each remote record pulled from Supabase:
+- If no local copy exists → insert into Hive
+- If local copy exists and is `synced` and remote `updatedAt` is later → overwrite local
+- If local copy has `pendingUpload` → skip (local wins, will be pushed next)
+- If remote has `deletedAt` set → hard-delete from Hive
+
+```dart
+for (final remote in remoteSubjects) {
+  final local = await _subjectRepo.getById(remote.id);
+  if (local == null ||
+      (remote.updatedAt.isAfter(local.updatedAt) &&
+          local.syncStatus == SyncStatus.synced)) {
+    if (remote.deletedAt != null) {
+      await _subjectRepo.hardDelete(remote.id);
+    } else {
+      await _subjectRepo.update(
+        remote.copyWith(syncStatus: SyncStatus.synced));
+    }
+  }
+}
+```
+
+#### Riverpod Provider
+
+```dart
+final syncServiceProvider = Provider<SyncService>((ref) {
+  final supabase = ref.watch(supabaseProvider);
+  final userId = ref.watch(currentUserIdProvider);
+  final service = SyncService(
+    supabase: supabase,
+    userId: userId,
+    subjectRepo: HiveSubjectRepository(),
+    itemRepo: HiveItemRepository(),
+    classRepo: HiveClassRepository(),
+    onSyncComplete: () {
+      ref.invalidate(subjectsProvider);
+      ref.invalidate(itemsProvider);
+      ref.invalidate(classesProvider);
+    },
+  );
+  ref.onDispose(service.dispose);
+  return service;
+});
+```
+
+The `onSyncComplete` callback invalidates all three UI providers, forcing them to re-read Hive and rebuild the widget tree with fresh data.
+
+---
+
+### Remote Datasources
+
+**Files:** `lib/data/remote/supabase_subject_datasource.dart`, `supabase_item_datasource.dart`, `supabase_class_datasource.dart`
+
+Each datasource follows the same pattern — a thin wrapper around the Supabase client that handles serialization between camelCase domain models and snake_case PostgreSQL columns.
+
+```dart
+class SupabaseSubjectDatasource {
+  final SupabaseClient _client;
+
+  /// Convert local model to Supabase row.
+  Map<String, dynamic> _toRow(Subject subject, String userId) => {
+    'id': subject.id,
+    'user_id': userId,        // injected at push time
+    'name': subject.name,
+    'room': subject.room,
+    'domains': subject.domains.map((d) => d.toMap()).toList(),
+    'max_grade': subject.maxGrade,
+    'created_at': subject.createdAt.toUtc().toIso8601String(),
+    'updated_at': subject.updatedAt.toUtc().toIso8601String(),
+    'deleted_at': subject.deletedAt?.toUtc().toIso8601String(),
+  };
+
+  /// Upsert (insert or update on conflict by primary key).
+  Future<void> upsert(Subject subject, String userId) async {
+    await _client.from('subjects').upsert(_toRow(subject, userId));
+  }
+
+  /// Fetch all records for a user (including soft-deleted for merge).
+  Future<List<Subject>> getAll(String userId) async {
+    final response = await _client
+        .from('subjects')
+        .select()
+        .eq('user_id', userId)
+        .order('updated_at', ascending: false);
+    return (response as List).map((r) => _fromRow(r)).toList();
+  }
+}
+```
+
+**Key design decision:** `user_id` is not stored in the local domain model. It is injected by `SyncService` at push time from `currentUserIdProvider`. This keeps local data user-agnostic and avoids coupling the domain layer to authentication.
+
+---
+
+### Realtime Subscriptions
+
+`SyncService.subscribeToRealtime()` creates one Supabase Realtime channel per table, filtered by `user_id`:
+
+```dart
+final subjectsChannel = _supabase
+    .channel('subjects_changes')
+    .onPostgresChanges(
+      event: PostgresChangeEvent.all,
+      schema: 'public',
+      table: 'subjects',
+      filter: PostgresChangeFilter(
+        type: PostgresChangeFilterType.eq,
+        column: 'user_id',
+        value: userId,
+      ),
+      callback: (payload) => _handleRealtimeChange('subjects', payload),
+    )
+    .subscribe();
+```
+
+The `_handleRealtimeChange` handler:
+1. Deserializes the Postgres row from `payload.newRecord` (for INSERT/UPDATE) or `payload.oldRecord` (for DELETE)
+2. Checks `local.syncStatus` — only overwrites if local is `synced` (no pending local changes)
+3. Applies the change to Hive
+4. Calls `onSyncComplete()` to refresh the UI
+
+---
+
+### Connectivity-Aware Sync
+
+**File:** `lib/core/sync/connectivity_provider.dart`
+
+Uses `connectivity_plus` to expose a reactive online/offline state:
+
+```dart
+final isOnlineProvider = Provider<bool>((ref) {
+  final connectivity = ref.watch(connectivityProvider);
+  return connectivity.when(
+    data: (results) => results.any((r) => r != ConnectivityResult.none),
+    loading: () => true,
+    error: (_, __) => true,
+  );
+});
+```
+
+The `syncOnConnectivityProvider` watches `isOnlineProvider` and triggers `fullSync()` when the device comes back online:
+
+```dart
+final syncOnConnectivityProvider = Provider<void>((ref) {
+  final isOnline = ref.watch(isOnlineProvider);
+  if (isOnline) {
+    ref.read(syncServiceProvider).fullSync();
+  }
+});
+```
+
+This provider is activated by the `_SyncButton` widget in the dashboard, which calls `ref.watch(syncOnConnectivityProvider)`.
+
+**Sync trigger summary:**
+
+| Trigger | Method | Location |
+|---|---|---|
+| User signs in | `fullSync()` + `subscribeToRealtime()` | `_AuthBridge` in `app.dart` |
+| Dashboard loads | `fullSync()` + `subscribeToRealtime()` | `_SyncButton` in `dashboard_screen.dart` |
+| Device comes online | `fullSync()` | `syncOnConnectivityProvider` watched by `_SyncButton` |
+| User taps "Sync now" | `fullSync()` | `_SyncButton` bottom sheet |
+| Any CRUD operation | `pushChanges()` | All three controllers |
+| Remote change received | Realtime handler | `SyncService._handleRealtimeChange()` |
+
+---
+
+### Supabase Schema & RLS
+
+**File:** `supabase/schema.sql`
+
+Three tables with identical security patterns:
+
+```sql
+CREATE TABLE subjects (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  name TEXT NOT NULL,
+  room TEXT,
+  domains JSONB DEFAULT '[]',
+  max_grade DOUBLE PRECISION DEFAULT 20,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now(),
+  deleted_at TIMESTAMPTZ           -- soft delete for sync
+);
+
+-- Row Level Security: each user can only access their own rows.
+-- Clerk JWTs include 'sub' as a reserved claim = user ID.
+ALTER TABLE subjects ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "users_own_subjects" ON subjects
+  FOR ALL USING (auth.jwt() ->> 'sub' = user_id);
+
+-- Index for efficient sync queries (pull by user, ordered by updated_at).
+CREATE INDEX idx_subjects_user_updated ON subjects(user_id, updated_at);
+
+-- Enable Realtime for live sync.
+ALTER PUBLICATION supabase_realtime ADD TABLE subjects;
+```
+
+Items and classes follow the same pattern with their respective columns. Items additionally reference `subjects(id)` via a foreign key on `subject_id`.
+
+**Clerk JWT requirements:**
+- Template name: `supabase`
+- Signing algorithm: HS256
+- Signing key: Supabase project JWT secret (from Supabase Dashboard → Settings → API)
+- The `sub` claim is automatically included by Clerk as the user ID (reserved claim)

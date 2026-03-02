@@ -27,6 +27,13 @@ class HiveItemRepository implements ItemRepository {
       });
   }
 
+  /// Get ALL items including soft-deleted (for sync push).
+  List<Item> getAllIncludingDeleted() {
+    return _box.values
+        .map((map) => Item.fromMap(Map<String, dynamic>.from(map)))
+        .toList();
+  }
+
   @override
   Future<List<Item>> getBySubjectId(String subjectId) async {
     final all = await getAll();
@@ -70,6 +77,11 @@ class HiveItemRepository implements ItemRepository {
     } else {
       await _box.delete(id);
     }
+  }
+
+  /// Hard delete from Hive (used by sync when remote says deleted).
+  Future<void> hardDelete(String id) async {
+    await _box.delete(id);
   }
 
   @override

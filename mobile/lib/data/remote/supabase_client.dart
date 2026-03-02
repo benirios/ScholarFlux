@@ -26,9 +26,22 @@ class SupabaseClientWrapper {
   /// Returns the Clerk-issued JWT for the "supabase" template.
   static Future<String?> _clerkAccessToken() async {
     final authState = globalClerkAuthState;
-    if (authState == null || authState.user == null) return null;
+    if (authState == null) {
+      debugPrint('[SupabaseClient] No globalClerkAuthState available');
+      return null;
+    }
+    if (authState.user == null) {
+      debugPrint('[SupabaseClient] No Clerk user signed in');
+      return null;
+    }
     try {
-      return await ClerkAuthHelper.getToken(authState);
+      final token = await ClerkAuthHelper.getToken(authState);
+      if (token == null) {
+        debugPrint('[SupabaseClient] Clerk returned null token for "supabase" template');
+      } else {
+        debugPrint('[SupabaseClient] Got Clerk JWT (${token.length} chars)');
+      }
+      return token;
     } catch (e) {
       debugPrint('[SupabaseClient] Failed to get Clerk token: $e');
       return null;

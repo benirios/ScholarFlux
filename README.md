@@ -73,6 +73,13 @@ A beautiful, offline-first Flutter app to manage subjects, assignments, tests, g
 - iOS-style tap-scale micro-interactions.
 - Fully dark themed with Apple-inspired color palette.
 
+### ☁️ Cloud Sync (Supabase + Clerk)
+- **Local-first, sync-on-write** — data saves to Hive instantly, then pushes to Supabase in the background.
+- **Clerk authentication** — sign in to enable cross-device sync via Clerk JWT tokens.
+- **Realtime updates** — changes from other devices appear automatically via Supabase Realtime WebSocket subscriptions.
+- **Conflict resolution** — last-write-wins with local-change protection (pending local edits are never overwritten by remote data).
+- **Offline resilient** — changes queue locally when offline and push automatically when connectivity returns.
+
 ### 💾 Offline-First
 - **Zero network dependency** — all data stored locally with Hive.
 - Repository pattern abstraction ready for future cloud sync.
@@ -113,6 +120,12 @@ ScholarFlux follows a **feature-first clean architecture** with clear separation
 ├─────────────────────────────────────────────┤
 │                Data Layer                   │
 │   Abstract Repositories → Hive Impl.       │
+├─────────────────────────────────────────────┤
+│              Sync Layer                     │
+│  SyncService • SyncQueue • Realtime        │
+├─────────────────────────────────────────────┤
+│              Remote Layer                   │
+│   Supabase Datasources • Clerk Auth        │
 └─────────────────────────────────────────────┘
 ```
 
@@ -134,6 +147,9 @@ ScholarFlux follows a **feature-first clean architecture** with clear separation
 | **Riverpod** | Reactive state management |
 | **Hive** | Lightweight local NoSQL database |
 | **GoRouter** | Declarative routing with nested navigation |
+| **Supabase** | Cloud PostgreSQL database with Realtime and RLS |
+| **Clerk** | User authentication and JWT token management |
+| **connectivity_plus** | Network state detection for offline/online sync |
 | **Material 3** | Design system (customized for Liquid Glass) |
 
 ---
@@ -146,6 +162,13 @@ mobile/lib/
 ├── app.dart                           # MaterialApp.router with dark theme
 │
 ├── core/
+│   ├── auth/
+│   │   └── clerk_auth_service.dart    # Clerk JWT helper + Riverpod providers
+│   ├── sync/
+│   │   ├── sync_service.dart          # Push/pull/realtime orchestrator
+│   │   ├── sync_queue.dart            # Hive-backed pending operations queue
+│   │   ├── sync_status.dart           # synced / pendingUpload / pendingDelete
+│   │   └── connectivity_provider.dart # Online/offline state via connectivity_plus
 │   ├── storage/
 │   │   ├── local_db.dart              # Hive box initialization & accessors
 │   │   └── app_preferences.dart       # Key-value prefs (onboarding seen, etc.)
@@ -162,10 +185,15 @@ mobile/lib/
 │       └── animations.dart            # AnimatedListItem, TapScale, FadeIn
 │
 ├── data/
-│   └── repositories/
-│       ├── hive_subject_repository.dart
-│       ├── hive_item_repository.dart
-│       └── hive_class_repository.dart
+│   ├── repositories/
+│   │   ├── hive_subject_repository.dart
+│   │   ├── hive_item_repository.dart
+│   │   └── hive_class_repository.dart
+│   └── remote/
+│       ├── supabase_client.dart            # Supabase init with Clerk JWT
+│       ├── supabase_subject_datasource.dart
+│       ├── supabase_item_datasource.dart
+│       └── supabase_class_datasource.dart
 │
 └── features/
     ├── dashboard/
@@ -291,7 +319,7 @@ For a deep-dive into every function, class, provider, and widget — including c
 - [x] Liquid Glass UI theme
 - [x] Offline-first with Hive
 - [x] Onboarding flow with rich glass visuals
-- [ ] Cloud sync (Firebase / Supabase)
+- [x] Cloud sync (Supabase + Clerk auth)
 - [ ] Push notifications for due dates
 - [x] Grade trend charts and analytics
 - [ ] Subject color coding

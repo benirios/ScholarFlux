@@ -18,6 +18,13 @@ class HiveClassRepository implements ClassRepository {
       ..sort((a, b) => a.compareTo(b));
   }
 
+  /// Get ALL classes including soft-deleted (for sync push).
+  List<ClassEntry> getAllIncludingDeleted() {
+    return _box.values
+        .map((map) => ClassEntry.fromMap(Map<String, dynamic>.from(map)))
+        .toList();
+  }
+
   @override
   Future<ClassEntry?> getById(String id) async {
     final map = _box.get(id);
@@ -67,6 +74,11 @@ class HiveClassRepository implements ClassRepository {
     } else {
       await _box.delete(id);
     }
+  }
+
+  /// Hard delete from Hive (used by sync when remote says deleted).
+  Future<void> hardDelete(String id) async {
+    await _box.delete(id);
   }
 
   @override
