@@ -91,6 +91,51 @@ class SyncService {
     }
   }
 
+  // ── Push Pending Changes ─────────────────────────────────
+
+  /// Process the sync queue: push only pending local changes to Supabase.
+  /// Call this after each local CRUD operation for immediate sync.
+  Future<void> pushChanges() async {
+    final userId = _userId;
+    if (userId == null) return;
+
+    final ops = SyncQueue.getAll();
+    if (ops.isEmpty) return;
+
+    dev.log('[SyncService] Pushing ${ops.length} pending changes...');
+
+    for (final op in ops) {
+      try {
+        switch (op.table) {
+          case 'subjects':
+            final subject = await _subjectRepo.getById(op.recordId);
+            if (subject != null) {
+              await _remoteSubjects.upsert(subject, userId);
+              await _subjectRepo.update(subject.copyWith(syncStatus: SyncStatus.synced));
+            }
+            break;
+          case 'items':
+            final item = await _itemRepo.getById(op.recordId);
+            if (item != null) {
+              await _remoteItems.upsert(item, userId);
+              await _itemRepo.update(item.copyWith(syncStatus: SyncStatus.synced));
+            }
+            break;
+          case 'classes':
+            final entry = await _classRepo.getById(op.recordId);
+            if (entry != null) {
+              await _remoteClasses.upsert(entry, userId);
+              await _classRepo.update(entry.copyWith(syncStatus: SyncStatus.synced));
+            }
+            break;
+        }
+        await SyncQueue.remove(op.id);
+      } catch (e) {
+        dev.log('[SyncService] Failed to push ${op.table}/${op.recordId}: $e');
+      }
+    }
+  }
+
   // ── Push All Local Data ─────────────────────────────────
 
   /// Push ALL local Hive data to Supabase (not just queue).

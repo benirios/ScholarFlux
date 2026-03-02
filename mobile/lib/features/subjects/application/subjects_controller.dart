@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/sync/sync_service.dart';
 import '../../../data/repositories/hive_subject_repository.dart';
 import '../data/subject_repository.dart';
 import '../domain/subject.dart';
@@ -39,16 +40,19 @@ class SubjectsNotifier extends AsyncNotifier<List<Subject>> {
     );
     await _repo.add(subject);
     ref.invalidateSelf();
+    ref.read(syncServiceProvider).pushChanges();
   }
 
   Future<void> updateSubject(Subject subject) async {
     await _repo.update(subject.copyWith(updatedAt: DateTime.now()));
     ref.invalidateSelf();
+    ref.read(syncServiceProvider).pushChanges();
   }
 
   Future<void> deleteSubject(String id) async {
     await _repo.delete(id);
     ref.invalidateSelf();
+    ref.read(syncServiceProvider).pushChanges();
   }
 
   String _generateId() =>
