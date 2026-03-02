@@ -2,14 +2,13 @@ import 'package:clerk_auth/clerk_auth.dart' as clerk;
 import 'package:clerk_flutter/clerk_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+/// Global reference to ClerkAuthState, set by _AuthBridge in app.dart.
+/// Used by the Supabase accessToken callback to get the Clerk JWT.
+ClerkAuthState? globalClerkAuthState;
+
 /// Clerk authentication service wrapping the Clerk Flutter SDK.
-///
-/// Unlike a typical service class, Clerk auth state is managed by
-/// the [ClerkAuth] widget tree. This service provides Riverpod-friendly
-/// helpers to access auth state from widgets that have a BuildContext.
 class ClerkAuthHelper {
   /// Get the current session token (JWT) for Supabase requests.
-  /// Must be called from a widget that is a descendant of [ClerkAuth].
   static Future<String?> getToken(ClerkAuthState authState,
       {String? template}) async {
     try {

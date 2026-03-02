@@ -1,6 +1,8 @@
+import 'dart:developer' as dev;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../core/auth/clerk_auth_service.dart';
 import '../../core/env_config.dart';
 
 /// Initializes and provides the Supabase client with Clerk JWT auth.
@@ -11,17 +13,27 @@ class SupabaseClientWrapper {
     client = Supabase.instance.client;
   }
 
-  /// Initialize Supabase (call once at app start).
+  /// Initialize Supabase with Clerk JWT as the access token provider.
   static Future<void> init() async {
     await Supabase.initialize(
       url: EnvConfig.supabaseUrl,
       anonKey: EnvConfig.supabaseAnonKey,
+      accessToken: _clerkAccessToken,
     );
   }
 
-  /// Set a JWT token on the Supabase client for authenticated requests.
-  Future<void> setAuthToken(String token) async {
-    await client.auth.setSession(token);
+  /// Called by Supabase for every authenticated request.
+  /// Returns the Clerk-issued JWT for the "supabase" template.
+  static Future<String?> _clerkAccessToken() async {
+    final authState = globalClerkAuthState;
+    if (authState == null || authState.user == null) return null;
+    try {
+      final token = await ClerkAuthHelper.getToken(authState);
+      return token;
+    } catch (e) {
+      dev.log('[SupabaseClient] Failed to get Clerk token: $e');
+      return null;
+    }
   }
 }
 
