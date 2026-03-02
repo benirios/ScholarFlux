@@ -39,23 +39,13 @@ CustomTransitionPage<void> _fadeSlide(GoRouterState state, Widget child) {
   );
 }
 
-/// Initial location defaults to sign-in; the ClerkAuth widget tree
-/// will handle redirecting signed-in users. Onboarding check happens
-/// via GoRouter redirect.
+/// App starts at onboarding (first launch) or dashboard.
+/// Auth is optional and accessible from the dashboard.
+/// Clerk persists sessions across app restarts automatically.
 final goRouter = GoRouter(
-  initialLocation: '/sign-in',
-  redirect: (context, state) {
-    final path = state.matchedLocation;
-    // If on auth routes, let them through
-    if (path == '/sign-in' || path == '/sign-up') return null;
-    // Check onboarding
-    if (!AppPreferences.hasSeenOnboarding && path != '/onboarding') {
-      return '/onboarding';
-    }
-    return null;
-  },
+  initialLocation: AppPreferences.hasSeenOnboarding ? '/dashboard' : '/onboarding',
   routes: [
-    // Auth routes (no guard)
+    // Auth routes (accessible from dashboard, not required)
     GoRoute(
       path: '/sign-in',
       name: 'sign-in',

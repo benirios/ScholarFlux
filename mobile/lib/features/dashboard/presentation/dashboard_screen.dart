@@ -1,3 +1,4 @@
+import 'package:clerk_flutter/clerk_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -36,11 +37,17 @@ class DashboardScreen extends ConsumerWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: CustomScrollView(
             slivers: [
-              // Date header
+              // Date header + sync button
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.only(top: 16, bottom: 16),
-                  child: _DateHeader(date: now),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(child: _DateHeader(date: now)),
+                      _SyncButton(),
+                    ],
+                  ),
                 ),
               ),
               // Day-of-week chips
@@ -426,6 +433,82 @@ class _PlaceholderCard extends StatelessWidget {
           const SizedBox(height: 8),
           Text(message, style: AppTypography.cardSubtitle),
         ],
+      ),
+    );
+  }
+}
+
+/// Button in dashboard header: shows cloud-off icon when signed out
+/// (tapping navigates to sign-in), cloud-done icon when signed in.
+class _SyncButton extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final authState = ClerkAuth.of(context);
+    final isSignedIn = authState.user != null;
+
+    return GestureDetector(
+      onTap: () {
+        if (isSignedIn) {
+          showModalBottomSheet(
+            context: context,
+            backgroundColor: AppColors.surfaceCard,
+            shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+            ),
+            builder: (ctx) => Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.cloud_done_rounded,
+                      color: AppColors.primary, size: 48),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Synced',
+                    style: AppTypography.cardTitle
+                        .copyWith(color: AppColors.primary),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    authState.user?.name ?? 'Signed in',
+                    style: AppTypography.cardSubtitle,
+                  ),
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton(
+                      onPressed: () async {
+                        await authState.signOut();
+                        if (ctx.mounted) Navigator.pop(ctx);
+                      },
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.redAccent,
+                        side: const BorderSide(color: Colors.redAccent),
+                      ),
+                      child: const Text('Sign out'),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ],
+              ),
+            ),
+          );
+        } else {
+          context.push('/sign-in');
+        }
+      },
+      child: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: AppColors.glassFill,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.glassBorder, width: 0.5),
+        ),
+        child: Icon(
+          isSignedIn ? Icons.cloud_done_rounded : Icons.cloud_off_rounded,
+          color: isSignedIn ? AppColors.primary : AppColors.textSecondary,
+          size: 22,
+        ),
       ),
     );
   }
