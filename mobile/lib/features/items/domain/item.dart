@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import '../../../core/sync/sync_status.dart';
 import 'item_type.dart';
 
 @immutable
@@ -17,6 +18,8 @@ class Item {
   final String? domainId; // which domain of the subject this belongs to
   final DateTime createdAt;
   final DateTime updatedAt;
+  final DateTime? deletedAt; // soft delete for sync
+  final SyncStatus syncStatus; // local-only, not sent to Supabase
 
   const Item({
     required this.id,
@@ -33,6 +36,8 @@ class Item {
     this.domainId,
     required this.createdAt,
     required this.updatedAt,
+    this.deletedAt,
+    this.syncStatus = SyncStatus.synced,
   });
 
   bool get isOverdue =>
@@ -63,6 +68,8 @@ class Item {
     String? domainId,
     DateTime? createdAt,
     DateTime? updatedAt,
+    DateTime? deletedAt,
+    SyncStatus? syncStatus,
   }) {
     return Item(
       id: id ?? this.id,
@@ -79,6 +86,8 @@ class Item {
       domainId: domainId ?? this.domainId,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      deletedAt: deletedAt ?? this.deletedAt,
+      syncStatus: syncStatus ?? this.syncStatus,
     );
   }
 
@@ -98,6 +107,8 @@ class Item {
       'domainId': domainId,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
+      'deletedAt': deletedAt?.toIso8601String(),
+      'syncStatus': syncStatus.name,
     };
   }
 
@@ -125,6 +136,12 @@ class Item {
       domainId: map['domainId'] as String?,
       createdAt: DateTime.parse(map['createdAt'] as String),
       updatedAt: DateTime.parse(map['updatedAt'] as String),
+      deletedAt: map['deletedAt'] != null
+          ? DateTime.parse(map['deletedAt'] as String)
+          : null,
+      syncStatus: map['syncStatus'] != null
+          ? SyncStatus.fromString(map['syncStatus'] as String)
+          : SyncStatus.synced,
     );
   }
 

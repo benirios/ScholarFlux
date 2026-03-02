@@ -1,3 +1,5 @@
+import '../../../core/sync/sync_status.dart';
+
 /// A recurring weekly class entry linked to a subject.
 class ClassEntry {
   final String id;
@@ -10,6 +12,8 @@ class ClassEntry {
   final String? teacher;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final DateTime? deletedAt; // soft delete for sync
+  final SyncStatus syncStatus; // local-only, not sent to Supabase
 
   const ClassEntry({
     required this.id,
@@ -22,6 +26,8 @@ class ClassEntry {
     this.teacher,
     required this.createdAt,
     required this.updatedAt,
+    this.deletedAt,
+    this.syncStatus = SyncStatus.synced,
   });
 
   ClassEntry copyWith({
@@ -35,6 +41,8 @@ class ClassEntry {
     String? teacher,
     DateTime? createdAt,
     DateTime? updatedAt,
+    DateTime? deletedAt,
+    SyncStatus? syncStatus,
   }) {
     return ClassEntry(
       id: id ?? this.id,
@@ -47,6 +55,8 @@ class ClassEntry {
       teacher: teacher ?? this.teacher,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      deletedAt: deletedAt ?? this.deletedAt,
+      syncStatus: syncStatus ?? this.syncStatus,
     );
   }
 
@@ -62,6 +72,8 @@ class ClassEntry {
       'teacher': teacher,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
+      'deletedAt': deletedAt?.toIso8601String(),
+      'syncStatus': syncStatus.name,
     };
   }
 
@@ -77,6 +89,12 @@ class ClassEntry {
       teacher: map['teacher'] as String?,
       createdAt: DateTime.parse(map['createdAt'] as String),
       updatedAt: DateTime.parse(map['updatedAt'] as String),
+      deletedAt: map['deletedAt'] != null
+          ? DateTime.parse(map['deletedAt'] as String)
+          : null,
+      syncStatus: map['syncStatus'] != null
+          ? SyncStatus.fromString(map['syncStatus'] as String)
+          : SyncStatus.synced,
     );
   }
 

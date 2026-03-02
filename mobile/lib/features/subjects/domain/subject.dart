@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 
+import '../../../core/sync/sync_status.dart';
 import '../../items/domain/item.dart';
 
 @immutable
@@ -50,6 +51,8 @@ class Subject {
   final double maxGrade; // grading scale ceiling (e.g. 20, 100, 10)
   final DateTime createdAt;
   final DateTime updatedAt;
+  final DateTime? deletedAt; // soft delete for sync
+  final SyncStatus syncStatus; // local-only, not sent to Supabase
 
   const Subject({
     required this.id,
@@ -59,6 +62,8 @@ class Subject {
     this.maxGrade = 20,
     required this.createdAt,
     required this.updatedAt,
+    this.deletedAt,
+    this.syncStatus = SyncStatus.synced,
   });
 
   /// Compute per-domain averages from graded items.
@@ -106,6 +111,8 @@ class Subject {
     double? maxGrade,
     DateTime? createdAt,
     DateTime? updatedAt,
+    DateTime? deletedAt,
+    SyncStatus? syncStatus,
   }) {
     return Subject(
       id: id ?? this.id,
@@ -115,6 +122,8 @@ class Subject {
       maxGrade: maxGrade ?? this.maxGrade,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      deletedAt: deletedAt ?? this.deletedAt,
+      syncStatus: syncStatus ?? this.syncStatus,
     );
   }
 
@@ -127,6 +136,8 @@ class Subject {
       'maxGrade': maxGrade,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
+      'deletedAt': deletedAt?.toIso8601String(),
+      'syncStatus': syncStatus.name,
     };
   }
 
@@ -142,6 +153,12 @@ class Subject {
       maxGrade: (map['maxGrade'] as num?)?.toDouble() ?? 20,
       createdAt: DateTime.parse(map['createdAt'] as String),
       updatedAt: DateTime.parse(map['updatedAt'] as String),
+      deletedAt: map['deletedAt'] != null
+          ? DateTime.parse(map['deletedAt'] as String)
+          : null,
+      syncStatus: map['syncStatus'] != null
+          ? SyncStatus.fromString(map['syncStatus'] as String)
+          : SyncStatus.synced,
     );
   }
 

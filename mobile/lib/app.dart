@@ -1,4 +1,6 @@
+import 'package:clerk_flutter/clerk_flutter.dart';
 import 'package:flutter/material.dart';
+import 'core/env_config.dart';
 import 'core/routing/app_router.dart';
 import 'core/theme/app_theme.dart';
 
@@ -7,11 +9,14 @@ class ScholarFluxApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp.router(
-      title: 'ScholarFlux',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.dark,
-      routerConfig: goRouter,
+    return ClerkAuth(
+      config: ClerkAuthConfig(publishableKey: EnvConfig.clerkPublishableKey),
+      child: MaterialApp.router(
+        title: 'ScholarFlux',
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.dark,
+        routerConfig: goRouter,
+      ),
     );
   }
 }
