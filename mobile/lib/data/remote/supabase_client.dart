@@ -1,4 +1,4 @@
-import 'dart:developer' as dev;
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -28,10 +28,9 @@ class SupabaseClientWrapper {
     final authState = globalClerkAuthState;
     if (authState == null || authState.user == null) return null;
     try {
-      final token = await ClerkAuthHelper.getToken(authState);
-      return token;
+      return await ClerkAuthHelper.getToken(authState);
     } catch (e) {
-      dev.log('[SupabaseClient] Failed to get Clerk token: $e');
+      debugPrint('[SupabaseClient] Failed to get Clerk token: $e');
       return null;
     }
   }

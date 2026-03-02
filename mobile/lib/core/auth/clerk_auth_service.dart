@@ -36,20 +36,24 @@ class ClerkAuthHelper {
   }
 }
 
-/// Provider that holds a reference to the ClerkAuthState.
-/// Must be overridden at the ProviderScope level after ClerkAuth initializes.
-final clerkAuthStateProvider = Provider<ClerkAuthState?>((ref) => null);
+/// Holds the Clerk user ID, updated by _AuthBridge when auth state changes.
+/// Uses a Notifier for Riverpod 3.x compatibility.
+final clerkUserIdProvider =
+    NotifierProvider<ClerkUserIdNotifier, String?>(ClerkUserIdNotifier.new);
+
+class ClerkUserIdNotifier extends Notifier<String?> {
+  @override
+  String? build() => null;
+
+  void set(String? userId) => state = userId;
+}
 
 /// Auth state — true if signed in.
 final isSignedInProvider = Provider<bool>((ref) {
-  final authState = ref.watch(clerkAuthStateProvider);
-  if (authState == null) return false;
-  return ClerkAuthHelper.isSignedIn(authState);
+  return ref.watch(clerkUserIdProvider) != null;
 });
 
 /// Current user ID.
 final currentUserIdProvider = Provider<String?>((ref) {
-  final authState = ref.watch(clerkAuthStateProvider);
-  if (authState == null) return null;
-  return ClerkAuthHelper.userId(authState);
+  return ref.watch(clerkUserIdProvider);
 });
