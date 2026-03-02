@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'nav_shell.dart';
 import '../storage/app_preferences.dart';
+import '../../features/auth/presentation/sign_in_screen.dart';
+import '../../features/auth/presentation/sign_up_screen.dart';
 import '../../features/onboarding/presentation/onboarding_screen.dart';
 import '../../features/dashboard/presentation/dashboard_screen.dart';
 import '../../features/subjects/presentation/subjects_screen.dart';
@@ -37,9 +39,23 @@ CustomTransitionPage<void> _fadeSlide(GoRouterState state, Widget child) {
   );
 }
 
+/// App starts at onboarding (first launch) or dashboard.
+/// Auth is optional and accessible from the dashboard.
+/// Clerk persists sessions across app restarts automatically.
 final goRouter = GoRouter(
   initialLocation: AppPreferences.hasSeenOnboarding ? '/dashboard' : '/onboarding',
   routes: [
+    // Auth routes (accessible from dashboard, not required)
+    GoRoute(
+      path: '/sign-in',
+      name: 'sign-in',
+      builder: (context, state) => const SignInScreen(),
+    ),
+    GoRoute(
+      path: '/sign-up',
+      name: 'sign-up',
+      builder: (context, state) => const SignUpScreen(),
+    ),
     GoRoute(
       path: '/onboarding',
       name: 'onboarding',

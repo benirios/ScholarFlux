@@ -4,6 +4,7 @@ const String subjectsBoxName = 'subjects';
 const String itemsBoxName = 'items';
 const String classesBoxName = 'classes';
 const String preferencesBoxName = 'preferences';
+const String syncQueueBoxName = 'sync_queue';
 
 class LocalDb {
   static Future<void> init() async {
@@ -12,10 +13,12 @@ class LocalDb {
     await Hive.openBox<Map>(itemsBoxName);
     await Hive.openBox<Map>(classesBoxName);
     await Hive.openBox(preferencesBoxName);
+    await Hive.openBox<Map>(syncQueueBoxName);
   }
 
   static Box<Map> get subjectsBox => Hive.box<Map>(subjectsBoxName);
   static Box<Map> get itemsBox => Hive.box<Map>(itemsBoxName);
   static Box<Map> get classesBox => Hive.box<Map>(classesBoxName);
   static Box get preferencesBox => Hive.box(preferencesBoxName);
+  static Box<Map> get syncQueueBox => Hive.box<Map>(syncQueueBoxName);
 }

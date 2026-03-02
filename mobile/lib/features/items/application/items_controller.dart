@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/sync/sync_service.dart';
 import '../../../data/repositories/hive_item_repository.dart';
 import '../data/item_repository.dart';
 import '../domain/item.dart';
@@ -50,16 +51,19 @@ class ItemsNotifier extends AsyncNotifier<List<Item>> {
     );
     await _repo.add(item);
     ref.invalidateSelf();
+    ref.read(syncServiceProvider).pushChanges();
   }
 
   Future<void> updateItem(Item item) async {
     await _repo.update(item.copyWith(updatedAt: DateTime.now()));
     ref.invalidateSelf();
+    ref.read(syncServiceProvider).pushChanges();
   }
 
   Future<void> deleteItem(String id) async {
     await _repo.delete(id);
     ref.invalidateSelf();
+    ref.read(syncServiceProvider).pushChanges();
   }
 
   Future<void> toggleComplete(Item item) async {
@@ -69,11 +73,13 @@ class ItemsNotifier extends AsyncNotifier<List<Item>> {
     );
     await _repo.update(updated);
     ref.invalidateSelf();
+    ref.read(syncServiceProvider).pushChanges();
   }
 
   Future<void> deleteItemsBySubject(String subjectId) async {
     await _repo.deleteBySubjectId(subjectId);
     ref.invalidateSelf();
+    ref.read(syncServiceProvider).pushChanges();
   }
 
   String _generateId() =>

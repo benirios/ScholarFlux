@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/sync/sync_service.dart';
 import '../../../data/repositories/hive_class_repository.dart';
 import '../data/class_repository.dart';
 import '../domain/class_entry.dart';
@@ -44,21 +45,25 @@ class ClassesNotifier extends AsyncNotifier<List<ClassEntry>> {
     );
     await _repo.add(entry);
     ref.invalidateSelf();
+    ref.read(syncServiceProvider).pushChanges();
   }
 
   Future<void> updateClass(ClassEntry entry) async {
     await _repo.update(entry.copyWith(updatedAt: DateTime.now()));
     ref.invalidateSelf();
+    ref.read(syncServiceProvider).pushChanges();
   }
 
   Future<void> deleteClass(String id) async {
     await _repo.delete(id);
     ref.invalidateSelf();
+    ref.read(syncServiceProvider).pushChanges();
   }
 
   Future<void> deleteClassesBySubject(String subjectId) async {
     await _repo.deleteBySubjectId(subjectId);
     ref.invalidateSelf();
+    ref.read(syncServiceProvider).pushChanges();
   }
 
   String _generateId() =>

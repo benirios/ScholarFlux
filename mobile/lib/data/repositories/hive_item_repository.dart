@@ -1,6 +1,8 @@
 import 'package:hive_flutter/hive_flutter.dart';
 
 import '../../core/storage/local_db.dart';
+import '../../core/sync/sync_queue.dart';
+import '../../core/sync/sync_status.dart';
 import '../../features/items/data/item_repository.dart';
 import '../../features/items/domain/item.dart';
 
@@ -11,6 +13,7 @@ class HiveItemRepository implements ItemRepository {
   Future<List<Item>> getAll() async {
     return _box.values
         .map((map) => Item.fromMap(Map<String, dynamic>.from(map)))
+        .where((i) => i.deletedAt == null) // filter out soft-deleted
         .toList()
       ..sort((a, b) {
         // Sort: pending first, then by due date
@@ -22,6 +25,13 @@ class HiveItemRepository implements ItemRepository {
         if (b.dueDate == null) return -1;
         return a.dueDate!.compareTo(b.dueDate!);
       });
+  }
+
+  /// Get ALL items including soft-deleted (for sync push).
+  List<Item> getAllIncludingDeleted() {
+    return _box.values
+        .map((map) => Item.fromMap(Map<String, dynamic>.from(map)))
+        .toList();
   }
 
   @override
@@ -39,16 +49,38 @@ class HiveItemRepository implements ItemRepository {
 
   @override
   Future<void> add(Item item) async {
-    await _box.put(item.id, item.toMap());
+    final i = item.copyWith(syncStatus: SyncStatus.pendingUpload);
+    await _box.put(i.id, i.toMap());
+    await SyncQueue.enqueue(table: 'items', recordId: i.id, action: 'upsert');
   }
 
   @override
   Future<void> update(Item item) async {
     await _box.put(item.id, item.toMap());
+    if (item.syncStatus != SyncStatus.synced) {
+      await SyncQueue.enqueue(table: 'items', recordId: item.id, action: 'upsert');
+    }
   }
 
   @override
   Future<void> delete(String id) async {
+    final map = _box.get(id);
+    if (map != null) {
+      final item = Item.fromMap(Map<String, dynamic>.from(map));
+      final deleted = item.copyWith(
+        deletedAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+        syncStatus: SyncStatus.pendingUpload,
+      );
+      await _box.put(id, deleted.toMap());
+      await SyncQueue.enqueue(table: 'items', recordId: id, action: 'upsert');
+    } else {
+      await _box.delete(id);
+    }
+  }
+
+  /// Hard delete from Hive (used by sync when remote says deleted).
+  Future<void> hardDelete(String id) async {
     await _box.delete(id);
   }
 
@@ -60,7 +92,7 @@ class HiveItemRepository implements ItemRepository {
       return map['subjectId'] == subjectId;
     }).toList();
     for (final key in keys) {
-      await _box.delete(key);
+      await delete(key as String);
     }
   }
 }
